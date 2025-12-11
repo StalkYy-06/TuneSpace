@@ -1,7 +1,8 @@
 {
   "name": "tunespace-backend",
   "version": "1.0.0",
-  "description": "TuneSpace Backend with Secure JWT Auth",
+  "type": "module",
+  "description": "TuneSpace Backend",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -20,11 +21,15 @@
   "dependencies": {
     "bcrypt": "^6.0.0",
     "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "crypto-js": "^4.2.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.7.0"
+    "express-rate-limit": "^8.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^8.7.0",
+    "nodemailer": "^7.0.11"
   },
   "devDependencies": {
     "nodemon": "^3.1.7"

@@ -1,0 +1,93 @@
+.forgot-container {
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.forgot-card {
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 28px;
+  padding: 50px 40px;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.forgot-card h2 {
+  font-size: 32px;
+  margin-bottom: 30px;
+}
+
+.forgot-card input {
+  width: 100%;
+  padding: 16px 20px;
+  margin: 12px 0;
+  background: rgba(255, 255, 255, 0.3);
+  border: none;
+  border-radius: 50px;
+  font-size: 16px;
+  color: white;
+}
+
+.forgot-card input::placeholder {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.forgot-card input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
+}
+
+.forgot-card button {
+  width: 100%;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 20px 0;
+  transition: all 0.3s ease;
+}
+
+.forgot-card button:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.forgot-card button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-msg {
+  color: #ffcccc;
+  background: rgba(255, 0, 0, 0.2);
+  padding: 12px;
+  border-radius: 12px;
+  margin: 16px 0;
+}
+
+.forgot-card p {
+  margin-top: 20px;
+}
+
+.forgot-card a {
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.forgot-card a:hover {
+  text-decoration: underline;
+}
