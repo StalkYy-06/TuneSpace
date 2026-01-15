@@ -1,9 +1,7 @@
-/* styles/otp.css - Simple clean OTP page */
-
 .otp-container {
   display: flex;
   min-height: 100vh;
-  background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+  background: #1db954;
   align-items: center;
   justify-content: center;
   padding: 20px;

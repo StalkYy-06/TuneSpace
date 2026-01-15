@@ -1,11 +1,14 @@
-// src/pages/Home.js  ← FINAL WORKING VERSION
+// src/pages/Home.js
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import axios from "axios";
+import "../styles/home.css";
+import Navbar from "../components/Navbar";
+import BottomBar from "../components/BottomBar";
 
 export default function Home() {
     const [user, setUser] = useState(null);
-    const navigate = useNavigate();
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -13,57 +16,90 @@ export default function Home() {
                 const res = await axios.get("http://localhost:5000/api/auth/me", {
                     withCredentials: true,
                 });
-
                 if (res.data.success) {
                     setUser(res.data.user);
                 }
             } catch (err) {
                 setUser(null);
+            } finally {
+                setLoading(false);
             }
         };
-
         fetchUser();
     }, []);
 
-    const handleLogout = async () => {
-        try {
-            await axios.post("http://localhost:5000/api/auth/logout", {}, { withCredentials: true });
-            setUser(null);
-            alert("Logged out successfully!");
-            navigate("/");
-        } catch (err) {
-            alert("Logout failed");
-        }
-    };
+    if (loading) {
+        return <div className="home-loading">Loading your music space...</div>;
+    }
 
     return (
-        <div className="home-container">
-            <div className="home-card">
-                <h1>TuneSpace</h1>
+        <div className="home-wrapper">
+            <Navbar />
 
-                {user ? (
-                    <>
-                        <h2>
-                            Welcome, <span style={{ color: "#6c5ce7" }}>{user.username}</span>!
-                        </h2>
-                        <button onClick={handleLogout} className="btn logout-btn">
-                            Logout
-                        </button>
-                    </>
-                ) : (
-                    <>
-                        <h2>Please log in to continue</h2>
-                        <div className="button-group">
-                            <Link to="/login">
-                                <button className="btn login-btn">Login</button>
-                            </Link>
+            <div className="home">
+                {/* Featured Albums */}
+                <section className="section">
+                    <h2>Featured Albums</h2>
+                    <div className="grid">
+                        {[1, 2, 3, 4].map((i) => (
+                            <div key={i} className="album-card placeholder">
+                                <div className="album-cover"></div>
+                                <h3>Album Title {i}</h3>
+                                <p>Artist Name</p>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+
+                {/* Recent Reviews */}
+                <section className="section">
+                    <h2>Recent Reviews</h2>
+                    <div className="reviews-list">
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="review-card placeholder">
+                                <div className="review-header">
+                                    <div className="avatar-placeholder"></div>
+                                    <div>
+                                        <strong>User{i}</strong> reviewed <em>Album Name</em>
+                                    </div>
+                                </div>
+                                <p>"This album is a masterpiece... lorem ipsum dolor sit amet."</p>
+                                <div className="rating">★★★★☆</div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+
+                {/* Trending Artists */}
+                <section className="section">
+                    <h2>Trending Artists</h2>
+                    <div className="grid">
+                        {[1, 2, 3, 4, 5, 6].map((i) => (
+                            <div key={i} className="artist-card placeholder">
+                                <div className="artist-image"></div>
+                                <p>Artist {i}</p>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+
+                {/* Login and register */}
+                {!user && (
+                    <section className="cta-section">
+                        <h2>Join the community</h2>
+                        <p>Sign up to review albums, follow artists, and share your taste.</p>
+                        <div className="cta-buttons">
                             <Link to="/register">
-                                <button className="btn register-btn">Register</button>
+                                <button className="btn primary">Register</button>
+                            </Link>
+                            <Link to="/login">
+                                <button className="btn secondary">Login</button>
                             </Link>
                         </div>
-                    </>
+                    </section>
                 )}
             </div>
+            <BottomBar />
         </div>
     );
 }

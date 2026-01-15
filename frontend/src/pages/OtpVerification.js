@@ -8,23 +8,41 @@ export default function OtpVerification({ email, onSuccess, mode = "register" })
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
 
+    // Determine which endpoint to use based on mode
+    const getVerifyEndpoint = () => {
+        if (mode === "register") {
+            return "http://localhost:5000/api/auth/verify-registration";
+        } else if (mode === "login") {
+            return "http://localhost:5000/api/auth/verify-2fa";
+        }
+        return "http://localhost:5000/api/auth/verify-registration"; // default
+    };
+
+    const getResendEndpoint = () => {
+        if (mode === "register") {
+            return "http://localhost:5000/api/auth/send-register-otp";
+        } else if (mode === "login") {
+            return "http://localhost:5000/api/auth/send-login-otp";
+        }
+        return "http://localhost:5000/api/auth/send-register-otp"; // default
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError("");
 
         try {
-            const res = await axios.post("http://localhost:5000/api/auth/verify-otp", {
+            const endpoint = getVerifyEndpoint();
+            const res = await axios.post(endpoint, {
                 email,
                 otp,
-            },
-                {
-                    withCredentials: true
-                });
+            }, {
+                withCredentials: true
+            });
 
             if (res.data.success) {
                 setSuccess(true);
-                // Call parent callback to proceed (e.g., complete register/login)
                 if (onSuccess) onSuccess();
             }
         } catch (err) {
@@ -37,7 +55,8 @@ export default function OtpVerification({ email, onSuccess, mode = "register" })
     const handleResend = async () => {
         setError("");
         try {
-            await axios.post("http://localhost:5000/api/auth/send-otp", { email });
+            const endpoint = getResendEndpoint();
+            await axios.post(endpoint, { email });
             alert("OTP resent successfully!");
         } catch (err) {
             setError("Failed to resend OTP");

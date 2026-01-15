@@ -1,10 +1,10 @@
-// utils/otp.js  → New file
+// utils/otp.js
 import Otp from "../models/Otp.js";
-import { sendLoginOTP, sendForgotPasswordOTP } from "./mailer.js";
+import { sendLoginOTP, sendRegisterOTP, send2FAOTP, sendForgotPasswordOTP } from "./mailer.js";
 
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-export const sendAndStoreOTP = async (email, purpose = "login") => {
+export const sendAndStoreOTP = async (email, purpose = "register") => {
     const otp = generateOTP();
 
     // Delete any old OTPs for this email + purpose
@@ -17,11 +17,19 @@ export const sendAndStoreOTP = async (email, purpose = "login") => {
         purpose,
     });
 
-    // Send appropriate email
-    if (purpose === "forgot-password") {
-        await sendForgotPasswordOTP(email, otp);
-    } else {
-        await sendLoginOTP(email, otp);
+    // Send appropriate email based on purpose
+    switch (purpose) {
+        case "register":
+            await sendRegisterOTP(email, otp);
+            break;
+        case "2fa-login":
+            await send2FAOTP(email, otp);
+            break;
+        case "forgot-password":
+            await sendForgotPasswordOTP(email, otp);
+            break;
+        default:
+            await sendLoginOTP(email, otp);
     }
 
     return true;

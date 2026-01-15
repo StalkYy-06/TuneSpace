@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import "../styles/forgot.css";  // New CSS file
+import "../styles/forgot.css";
 
 export default function ForgotPassword() {
     const [email, setEmail] = useState("");

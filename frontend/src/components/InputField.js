@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-import UserIcon from "../icons/user.png";     // Adjust path if needed
+import UserIcon from "../icons/user.png";
 import EmailIcon from "../icons/mail.png";
 import LockIcon from "../icons/lock.png";
 import EyeIcon from "../icons/v_on.png";

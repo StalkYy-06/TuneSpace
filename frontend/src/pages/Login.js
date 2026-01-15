@@ -20,17 +20,26 @@ export default function Login() {
 
         try {
             // First validate credentials
-            const res = await axios.post("http://localhost:5000/api/auth/login", form);
+            const res = await axios.post(
+                "http://localhost:5000/api/auth/login",
+                form,
+                { withCredentials: true }
+            );
 
             const emailToUse = res.data.user.email;
             setUserEmail(emailToUse);
 
-            //send otp
-            await axios.post("http://localhost:5000/api/auth/send-otp",
-                { email: emailToUse },
-                { withCredentials: true }
-            );
-            setOtpPhase(true);
+            // If 2FA is required, send OTP using the specific endpoint
+            if (res.data.requires2FA) {
+                await axios.post("http://localhost:5000/api/auth/send-login-otp",
+                    { email: emailToUse },
+                    { withCredentials: true }
+                );
+                setOtpPhase(true);
+            } else {
+                // Direct login without 2FA
+                navigate("/");
+            }
         } catch (err) {
             const data = err.response?.data;
             if (data?.field && data?.message) {
@@ -41,7 +50,7 @@ export default function Login() {
         }
     };
 
-    //successful otp
+    // Successful OTP verification
     const handleOtpVerified = () => {
         navigate("/");
     };
@@ -53,7 +62,9 @@ export default function Login() {
     return (
         <div>
             <div className="logo-container">
-                <Link to="/"><img src={Logo} alt="TuneSpace" className="app-logo" /></Link>
+                <Link to="/" className="Logo">
+                    <span>TuneSpace</span>
+                </Link>
             </div>
             <div className="login">
                 <div className="container-l">
@@ -87,6 +98,8 @@ export default function Login() {
                                         Forgot Password?
                                     </Link>
                                 </p>
+
+                                {errors.general && <p className="error-msg">{errors.general}</p>}
 
                                 <button type="submit">Login</button>
 

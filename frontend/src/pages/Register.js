@@ -24,7 +24,11 @@ export default function Register() {
         setErrors({});
 
         try {
-            await axios.post("http://localhost:5000/api/auth/send-otp", { email: form.email }, { withCredentials: true });
+            // Send OTP using the specific register endpoint
+            await axios.post("http://localhost:5000/api/auth/send-register-otp",
+                { email: form.email },
+                { withCredentials: true }
+            );
             setOtpPhase(true);
         } catch (err) {
             const msg = err.response?.data?.message || "Failed to send OTP";
@@ -34,6 +38,7 @@ export default function Register() {
 
     const handleOtpVerified = async () => {
         try {
+            // After OTP verification, complete registration
             await axios.post("http://localhost:5000/api/auth/register", form);
             alert("Registration Successful!");
             navigate("/");
@@ -49,7 +54,9 @@ export default function Register() {
     return (
         <div>
             <div className="logo-container">
-                <Link to="/"><img src={Logo} alt="TuneSpace" className="app-logo" /></Link>
+                <Link to="/" className="Logo">
+                    <span>TuneSpace</span>
+                </Link>
             </div>
             <div className="register">
                 <div className="container-r">

@@ -14,7 +14,7 @@ const sendError = (res, field, message) => {
     return res.status(400).json({ success: false, field, message });
 };
 
-//  Register
+// Register
 router.post("/register", authRateLimiter, async (req, res) => {
     const { username, email, password, confirmPassword } = req.body;
 
@@ -22,8 +22,10 @@ router.post("/register", authRateLimiter, async (req, res) => {
     if (!username?.trim()) return sendError(res, "username", "Username is required.");
     if (!email?.trim()) return sendError(res, "email", "Email is required.");
     if (!email.includes("@")) return sendError(res, "email", "Invalid email format.");
+    if (!password?.trim()) return sendError(res, "password", "Password is required.");
 
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
     if (!passwordRegex.test(password))
         return res.status(400).json({
             success: false,
@@ -39,10 +41,10 @@ router.post("/register", authRateLimiter, async (req, res) => {
             $or: [{ email: email.toLowerCase() }, { username }],
         });
 
-        if (existing) {
-            if (existing.email === email.toLowerCase())
+        if (existingUser) {
+            if (existingUser.email === email.toLowerCase())
                 return sendError(res, "email", "Email already registered.");
-            if (existing.username === username)
+            if (existingUser.username === username)
                 return sendError(res, "username", "Username already taken.");
         }
 
@@ -53,16 +55,18 @@ router.post("/register", authRateLimiter, async (req, res) => {
             username,
             email: email.toLowerCase(),
             password: hashedPassword,
+            emailVerified: true,
         });
 
-        const token = generateToken(newUser._id);
+        const token = generateToken(user._id);
         setAuthCookie(res, token);
 
         res.json({
             success: true,
-            message: "Registration successful!",
+            message: "Account created! Please verify your email!",
             user: { username: newUser.username, email: newUser.email },
         });
+
     } catch (err) {
         console.error("Register error:", err);
         if (err.code === 11000) {
@@ -73,12 +77,40 @@ router.post("/register", authRateLimiter, async (req, res) => {
     }
 });
 
+// Verify Email After Registration
+router.post("/verify-registration", async (req, res) => {
+    const { email, otp } = req.body;
+
+    if (!email?.trim() || !otp?.trim()) {
+        return res.status(400).json({ success: false, message: "Email and OTP required" });
+    }
+
+    try {
+        const isValid = await verifyOTP(email, otp, "register");
+        if (!isValid) {
+            return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
+        }
+
+        // No user fetch/update here—handled in /register after this succeeds
+        res.json({
+            success: true,
+            message: "OTP verified! Proceed to complete registration.",
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: "Server error during verification" });
+    }
+});
+
 // Login 
 router.post("/login", authRateLimiter, async (req, res) => {
     const { usernameOrEmail, password } = req.body;
 
     if (!usernameOrEmail?.trim())
         return sendError(res, "usernameOrEmail", "Username or email is required.");
+
+    if (!password?.trim())
+        return sendError(res, "password", "Password is required.");
 
     try {
         const user = await User.findOne({
@@ -90,8 +122,26 @@ router.post("/login", authRateLimiter, async (req, res) => {
 
         if (!user) return sendError(res, "usernameOrEmail", "Invalid credentials.");
 
+        if (!user.emailVerified) {
+            return res.status(403).json({
+                success: false,
+                message: "Please verify your email first.",
+                needsVerification: true,
+                email: user.email
+            });
+        }
+
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return sendError(res, "password", "Invalid credentials.");
+
+        if (user.twoFactorEnabled) {
+            return res.json({
+                success: true,
+                requires2FA: true,
+                user: { email: user.email },
+                message: "2FA required. Please check your email for OTP."
+            });
+        }
 
         const token = generateToken(user._id);
         setAuthCookie(res, token);
@@ -107,8 +157,27 @@ router.post("/login", authRateLimiter, async (req, res) => {
     }
 });
 
-//  Send login OTP
-router.post("/send-otp", otpRateLimiter, async (req, res) => {
+// Send OTP for Registration
+router.post("/send-register-otp", otpRateLimiter, async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, message: "Email required" });
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (user && user.emailVerified) {
+        return res.status(400).json({ success: false, message: "Email already verified" });
+    }
+
+    try {
+        await sendAndStoreOTP(email, "register");
+        res.json({ success: true, message: "Verification code sent to your email" });
+    } catch (err) {
+        console.error("Send OTP Error:", err);
+        res.status(500).json({ success: false, message: "Failed to send OTP" });
+    }
+});
+
+// Send 2FA OTP for Login
+router.post("/send-login-otp", otpRateLimiter, async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ success: false, message: "Email required" });
 
@@ -117,23 +186,27 @@ router.post("/send-otp", otpRateLimiter, async (req, res) => {
         return res.status(400).json({ success: false, message: "No account with that email" });
     }
 
+    if (!user.twoFactorEnabled) {
+        return res.status(400).json({ success: false, message: "2FA not enabled for this account" });
+    }
+
     try {
-        await sendAndStoreOTP(email, "login");
-        res.json({ success: true, message: "Login OTP sent to your email" });
+        await sendAndStoreOTP(email, "2fa-login");
+        res.json({ success: true, message: "2FA code sent to your email" });
     } catch (err) {
         console.error("Send OTP Error:", err);
         res.status(500).json({ success: false, message: "Failed to send OTP" });
     }
 });
 
-//  Verify OTP & Login
-router.post("/verify-otp", async (req, res) => {
+// Verify 2FA Login OTP
+router.post("/verify-2fa", async (req, res) => {
     const { email, otp } = req.body;
 
     if (!email || !otp)
         return res.status(400).json({ success: false, message: "Email and OTP required" });
 
-    const isValid = await verifyOTP(email, otp, "login");
+    const isValid = await verifyOTP(email, otp, "2fa-login");
     if (!isValid)
         return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
 
@@ -145,12 +218,12 @@ router.post("/verify-otp", async (req, res) => {
 
     res.json({
         success: true,
-        message: "Logged in successfully with OTP",
+        message: "Logged in successfully with 2FA",
         user: { username: user.username, email: user.email },
     });
 });
 
-//  Forgot Password
+// Forgot Password
 router.post("/forgot-password", otpRateLimiter, async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ success: false, message: "Email required" });
@@ -169,7 +242,7 @@ router.post("/forgot-password", otpRateLimiter, async (req, res) => {
     }
 });
 
-//  Reset Password 
+// Reset Password 
 router.post("/reset-password", async (req, res) => {
     const { email, otp, newPassword, confirmPassword } = req.body;
 
@@ -207,7 +280,7 @@ router.post("/reset-password", async (req, res) => {
     }
 });
 
-//  Get Current User
+// Get Current User
 router.get("/me", async (req, res) => {
     const token = req.cookies.token;
     if (!token) return res.status(401).json({ success: false, message: "Not authenticated" });
