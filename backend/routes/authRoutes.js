@@ -14,7 +14,7 @@ const sendError = (res, field, message) => {
     return res.status(400).json({ success: false, field, message });
 };
 
-// Register
+// Register - Create unverified user + send OTP
 router.post("/register", authRateLimiter, async (req, res) => {
     const { username, email, password, confirmPassword } = req.body;
 
@@ -40,116 +40,91 @@ router.post("/register", authRateLimiter, async (req, res) => {
         const existingUser = await User.findOne({
             $or: [{ email: email.toLowerCase() }, { username }],
         });
-
         if (existingUser) {
             if (existingUser.email === email.toLowerCase())
-                return sendError(res, "email", "Email already registered.");
+                return sendError(res, "email", "Email already in use.");
             if (existingUser.username === username)
                 return sendError(res, "username", "Username already taken.");
         }
 
         const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        const hashed = await bcrypt.hash(password, salt);
 
-        const newUser = await User.create({
+        const user = await User.create({
             username,
             email: email.toLowerCase(),
-            password: hashedPassword,
-            emailVerified: true,
+            password: hashed,
+            emailVerified: false,
         });
 
-        const token = generateToken(user._id);
-        setAuthCookie(res, token);
+        // Send OTP
+        await sendAndStoreOTP(email.toLowerCase(), "register");
 
-        res.json({
-            success: true,
-            message: "Account created! Please verify your email!",
-            user: { username: newUser.username, email: newUser.email },
-        });
-
+        res.json({ success: true, message: "Verification code sent. Please check your email." });
     } catch (err) {
-        console.error("Register error:", err);
-        if (err.code === 11000) {
-            const field = Object.keys(err.keyValue)[0];
-            return sendError(res, field, `${field} already exists.`);
-        }
+        console.error(err);
         res.status(500).json({ success: false, message: "Server error" });
     }
 });
 
-// Verify Email After Registration
-router.post("/verify-registration", async (req, res) => {
+// Verify Registration - Verify OTP + mark verified + login
+router.post("/verify-registration", otpRateLimiter, async (req, res) => {
+
     const { email, otp } = req.body;
 
-    if (!email?.trim() || !otp?.trim()) {
-        return res.status(400).json({ success: false, message: "Email and OTP required" });
-    }
+    if (!email?.trim()) return sendError(res, "email", "Email is required.");
+    if (!otp || otp.length !== 6) return sendError(res, "otp", "Valid 6-digit OTP is required.");
 
     try {
-        const isValid = await verifyOTP(email, otp, "register");
+        const isValid = await verifyOTP(email.toLowerCase(), otp, "register");
         if (!isValid) {
-            return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
+            return res.status(400).json({
+                success: false,
+                field: "otp",
+                message: "Invalid or expired verification code"
+            });
         }
 
-        // No user fetch/update here—handled in /register after this succeeds
-        res.json({
-            success: true,
-            message: "OTP verified! Proceed to complete registration.",
-        });
+        const user = await User.findOne({ email: email.toLowerCase() });
+        if (!user) return sendError(res, "email", "User not found.");
+
+        if (user.emailVerified) return sendError(res, "email", "Email already verified.");
+
+        user.emailVerified = true;
+        await user.save();
+
+        const token = generateToken(user._id);
+        setAuthCookie(res, token);
+
+        res.json({ success: true, message: "Email verified successfully!" });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ success: false, message: "Server error during verification" });
+        res.status(500).json({ success: false, message: "Server error" });
     }
 });
 
-// Login 
+// Login
 router.post("/login", authRateLimiter, async (req, res) => {
     const { usernameOrEmail, password } = req.body;
 
-    if (!usernameOrEmail?.trim())
-        return sendError(res, "usernameOrEmail", "Username or email is required.");
-
-    if (!password?.trim())
-        return sendError(res, "password", "Password is required.");
+    if (!usernameOrEmail?.trim()) return sendError(res, "usernameOrEmail", "Username or email is required.");
+    if (!password?.trim()) return sendError(res, "password", "Password is required.");
 
     try {
         const user = await User.findOne({
-            $or: [
-                { username: usernameOrEmail },
-                { email: usernameOrEmail.toLowerCase() },
-            ],
+            $or: [{ email: usernameOrEmail.toLowerCase() }, { username: usernameOrEmail }],
         });
-
         if (!user) return sendError(res, "usernameOrEmail", "Invalid credentials.");
 
-        if (!user.emailVerified) {
-            return res.status(403).json({
-                success: false,
-                message: "Please verify your email first.",
-                needsVerification: true,
-                email: user.email
-            });
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return sendError(res, "password", "Invalid credentials.");
-
-        if (user.twoFactorEnabled) {
-            return res.json({
-                success: true,
-                requires2FA: true,
-                user: { email: user.email },
-                message: "2FA required. Please check your email for OTP."
-            });
-        }
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) return sendError(res, "password", "Invalid credentials.");
 
         const token = generateToken(user._id);
         setAuthCookie(res, token);
 
         res.json({
             success: true,
-            message: "Login successful!",
-            user: { username: user.username, email: user.email },
+            user: { username: user.username, email: user.email, requires2FA: user.twoFactorEnabled },
         });
     } catch (err) {
         console.error(err);
@@ -157,108 +132,88 @@ router.post("/login", authRateLimiter, async (req, res) => {
     }
 });
 
-// Send OTP for Registration
+// Send OTP for registration
 router.post("/send-register-otp", otpRateLimiter, async (req, res) => {
     const { email } = req.body;
-    if (!email) return res.status(400).json({ success: false, message: "Email required" });
 
-    const user = await User.findOne({ email: email.toLowerCase() });
-    if (user && user.emailVerified) {
-        return res.status(400).json({ success: false, message: "Email already verified" });
-    }
+    if (!email?.trim()) return sendError(res, "email", "Email is required.");
 
     try {
-        await sendAndStoreOTP(email, "register");
-        res.json({ success: true, message: "Verification code sent to your email" });
-    } catch (err) {
-        console.error("Send OTP Error:", err);
-        res.status(500).json({ success: false, message: "Failed to send OTP" });
-    }
-});
-
-// Send 2FA OTP for Login
-router.post("/send-login-otp", otpRateLimiter, async (req, res) => {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ success: false, message: "Email required" });
-
-    const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user) {
-        return res.status(400).json({ success: false, message: "No account with that email" });
-    }
-
-    if (!user.twoFactorEnabled) {
-        return res.status(400).json({ success: false, message: "2FA not enabled for this account" });
-    }
-
-    try {
-        await sendAndStoreOTP(email, "2fa-login");
-        res.json({ success: true, message: "2FA code sent to your email" });
-    } catch (err) {
-        console.error("Send OTP Error:", err);
-        res.status(500).json({ success: false, message: "Failed to send OTP" });
-    }
-});
-
-// Verify 2FA Login OTP
-router.post("/verify-2fa", async (req, res) => {
-    const { email, otp } = req.body;
-
-    if (!email || !otp)
-        return res.status(400).json({ success: false, message: "Email and OTP required" });
-
-    const isValid = await verifyOTP(email, otp, "2fa-login");
-    if (!isValid)
-        return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
-
-    const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
-
-    const token = generateToken(user._id);
-    setAuthCookie(res, token);
-
-    res.json({
-        success: true,
-        message: "Logged in successfully with 2FA",
-        user: { username: user.username, email: user.email },
-    });
-});
-
-// Forgot Password
-router.post("/forgot-password", otpRateLimiter, async (req, res) => {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ success: false, message: "Email required" });
-
-    const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user) {
-        return res.status(400).json({ success: false, message: "No account with that email" });
-    }
-
-    try {
-        await sendAndStoreOTP(email, "forgot-password");
-        res.json({ success: true, message: "Password reset code sent to your email" });
+        await sendAndStoreOTP(email.toLowerCase(), "register");
+        res.json({ success: true, message: "Verification code sent." });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ success: false, message: "Failed to send reset code" });
+        res.status(500).json({ success: false, message: "Failed to send code" });
     }
 });
 
-// Reset Password 
-router.post("/reset-password", async (req, res) => {
+// Send OTP for 2FA login
+router.post("/send-login-otp", otpRateLimiter, async (req, res) => {
+    const { email } = req.body;
+
+    if (!email?.trim()) return sendError(res, "email", "Email is required.");
+
+    try {
+        await sendAndStoreOTP(email.toLowerCase(), "2fa-login");
+        res.json({ success: true, message: "Login code sent." });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: "Failed to send code" });
+    }
+});
+
+// Verify 2FA for login
+router.post("/verify-2fa", otpRateLimiter, async (req, res) => {
+    const { email, otp } = req.body;
+
+    if (!email?.trim()) return sendError(res, "email", "Email is required.");
+    if (!otp || otp.length !== 6) return sendError(res, "otp", "Valid 6-digit code required.");
+
+    try {
+        const isValid = await verifyOTP(email.toLowerCase(), otp, "2fa-login");
+        if (!isValid) return sendError(res, "otp", "Invalid or expired code.");
+
+        const user = await User.findOne({ email: email.toLowerCase() });
+        if (!user) return sendError(res, "email", "User not found.");
+
+        const token = generateToken(user._id);
+        setAuthCookie(res, token);
+
+        res.json({ success: true, message: "2FA verified. Logged in." });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+});
+
+// Forgot Password - Send OTP
+router.post("/forgot-password", otpRateLimiter, async (req, res) => {
+    const { email } = req.body;
+
+    if (!email?.trim()) return sendError(res, "email", "Email is required.");
+
+    try {
+        const user = await User.findOne({ email: email.toLowerCase() });
+        if (!user) return sendError(res, "email", "No account found with this email.");
+
+        await sendAndStoreOTP(email.toLowerCase(), "forgot-password");
+
+        res.json({ success: true, message: "Reset code sent to your email." });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+});
+
+// Reset Password
+router.post("/reset-password", otpRateLimiter, async (req, res) => {
     const { email, otp, newPassword, confirmPassword } = req.body;
 
-    if (!email || !otp || !newPassword || !confirmPassword)
-        return res.status(400).json({ success: false, message: "All fields are required" });
-
-    if (newPassword !== confirmPassword)
-        return sendError(res, "confirmPassword", "Passwords do not match");
+    if (newPassword !== confirmPassword) return sendError(res, "confirmPassword", "Passwords do not match.");
 
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!passwordRegex.test(newPassword))
-        return res.status(400).json({
-            success: false,
-            field: "newPassword",
-            message: "Password too weak. Use 8+ chars, uppercase, number, symbol.",
-        });
+        return sendError(res, "newPassword", "Password too weak. Use 8+ chars, uppercase, number, symbol.");
 
     const isValid = await verifyOTP(email, otp, "forgot-password");
     if (!isValid)

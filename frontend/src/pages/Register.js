@@ -24,27 +24,21 @@ export default function Register() {
         setErrors({});
 
         try {
-            // Send OTP using the specific register endpoint
-            await axios.post("http://localhost:5000/api/auth/send-register-otp",
-                { email: form.email },
+            // Send full registration data
+            await axios.post(
+                "http://localhost:5000/api/auth/register",
+                form,
                 { withCredentials: true }
             );
             setOtpPhase(true);
         } catch (err) {
-            const msg = err.response?.data?.message || "Failed to send OTP";
+            const msg = err.response?.data?.message || "Failed to start registration";
             setErrors({ email: msg });
         }
     };
 
     const handleOtpVerified = async () => {
-        try {
-            // After OTP verification, complete registration
-            await axios.post("http://localhost:5000/api/auth/register", form);
-            alert("Registration Successful!");
-            navigate("/");
-        } catch (err) {
-            alert("Registration failed after verification");
-        }
+        navigate("/");
     };
 
     if (otpPhase) {

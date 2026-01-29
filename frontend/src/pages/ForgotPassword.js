@@ -17,19 +17,22 @@ export default function ForgotPassword() {
         e.preventDefault();
         setLoading(true);
         setError("");
+
         try {
             await axios.post("http://localhost:5000/api/auth/forgot-password", { email });
             setOtpSent(true);
         } catch (err) {
             setError(err.response?.data?.message || "Failed to send OTP");
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     const handleReset = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError("");
+
         try {
             await axios.post("http://localhost:5000/api/auth/reset-password", {
                 email,
@@ -37,18 +40,31 @@ export default function ForgotPassword() {
                 newPassword,
                 confirmPassword,
             });
-            alert("Password reset successful!");
+            alert("Password reset successful! Please login.");
             navigate("/login");
         } catch (err) {
             setError(err.response?.data?.message || "Reset failed");
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     return (
         <div className="forgot-container">
+            {/* Logo at top-left - same as Register & Login */}
+            <div className="logo-container">
+                <Link to="/" className="Logo">
+                    <span>TuneSpace</span>
+                </Link>
+            </div>
+
             <div className="forgot-card">
                 <h2>Forgot Password</h2>
+                <p className="subtitle">
+                    {otpSent
+                        ? "Enter the code sent to your email"
+                        : "We'll send a reset code to your email"}
+                </p>
 
                 {!otpSent ? (
                     <form onSubmit={handleSendOTP}>
@@ -58,46 +74,57 @@ export default function ForgotPassword() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
+                            disabled={loading}
+                            autoFocus
                         />
                         {error && <p className="error-msg">{error}</p>}
                         <button type="submit" disabled={loading}>
-                            {loading ? "Sending..." : "Send OTP"}
+                            {loading ? "Sending..." : "Send Reset Code"}
                         </button>
-                        <p>
-                            <Link to="/login">Back to Login</Link>
-                        </p>
                     </form>
                 ) : (
                     <form onSubmit={handleReset}>
-                        <p>OTP sent to {email}</p>
+                        <p className="email-display">Code sent to <strong>{email}</strong></p>
+
                         <input
                             type="text"
-                            placeholder="Enter OTP"
+                            placeholder="Enter 6-digit code"
                             value={otp}
-                            onChange={(e) => setOtp(e.target.value)}
+                            onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
                             maxLength="6"
                             required
+                            disabled={loading}
                         />
+
                         <input
                             type="password"
                             placeholder="New Password"
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                             required
+                            disabled={loading}
                         />
+
                         <input
                             type="password"
-                            placeholder="Confirm Password"
+                            placeholder="Confirm New Password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             required
+                            disabled={loading}
                         />
+
                         {error && <p className="error-msg">{error}</p>}
+
                         <button type="submit" disabled={loading}>
                             {loading ? "Resetting..." : "Reset Password"}
                         </button>
                     </form>
                 )}
+
+                <p className="back-link">
+                    <Link to="/login">Back to Login</Link>
+                </p>
             </div>
         </div>
     );

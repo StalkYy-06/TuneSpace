@@ -87,7 +87,6 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(135deg, #333 0%, #111 100%);
-  animation: shimmer 2s infinite linear;
 }
 
 .album-card h3,
@@ -133,7 +132,6 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(135deg, #333 0%, #111 100%);
-  animation: shimmer 2s infinite linear;
 }
 
 .artist-card p {
@@ -188,7 +186,6 @@
     rgba(255, 255, 255, 0.1),
     transparent
   );
-  animation: shimmer 1.8s infinite;
 }
 
 .review-header strong {

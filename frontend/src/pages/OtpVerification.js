@@ -15,7 +15,7 @@ export default function OtpVerification({ email, onSuccess, mode = "register" })
         } else if (mode === "login") {
             return "http://localhost:5000/api/auth/verify-2fa";
         }
-        return "http://localhost:5000/api/auth/verify-registration"; // default
+        return "http://localhost:5000/api/auth/verify-registration";
     };
 
     const getResendEndpoint = () => {
@@ -24,7 +24,7 @@ export default function OtpVerification({ email, onSuccess, mode = "register" })
         } else if (mode === "login") {
             return "http://localhost:5000/api/auth/send-login-otp";
         }
-        return "http://localhost:5000/api/auth/send-register-otp"; // default
+        return "http://localhost:5000/api/auth/send-register-otp";
     };
 
     const handleSubmit = async (e) => {
@@ -34,10 +34,9 @@ export default function OtpVerification({ email, onSuccess, mode = "register" })
 
         try {
             const endpoint = getVerifyEndpoint();
-            const res = await axios.post(endpoint, {
-                email,
-                otp,
-            }, {
+            const payload = { email, otp };
+
+            const res = await axios.post(endpoint, payload, {
                 withCredentials: true
             });
 
@@ -62,17 +61,6 @@ export default function OtpVerification({ email, onSuccess, mode = "register" })
             setError("Failed to resend OTP");
         }
     };
-
-    if (success) {
-        return (
-            <div className="otp-container">
-                <div className="otp-card">
-                    <h2>Verified!</h2>
-                    <p>Your email has been verified successfully.</p>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="otp-container">

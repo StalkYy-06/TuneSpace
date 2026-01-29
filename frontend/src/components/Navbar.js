@@ -38,7 +38,7 @@ export default function Navbar() {
     };
 
     if (loading) {
-        return null;
+        return null; // or a skeleton loader
     }
 
     return (
@@ -47,9 +47,8 @@ export default function Navbar() {
                 <Link to="/" className="nav-logo">
                     <span>TuneSpace</span>
                 </Link>
+
                 <div className="right-group">
-
-
                     <ul className="nav-menu">
                         <li className="nav-item">
                             <Link to="/" className="nav-link">Home</Link>
@@ -65,7 +64,25 @@ export default function Navbar() {
                     <div className="auth-section">
                         {user ? (
                             <Link to="/profile" className="profile-btn">
-                                {user.username}
+                                {/* Profile Picture Circle */}
+                                <div className="profile-pic-container">
+                                    {user.profilePicture ? (
+                                        <img
+                                            src={`http://localhost:5000${user.profilePicture}`}
+                                            alt={user.username}
+                                            className="profile-pic"
+                                            onError={(e) => {
+                                                e.target.src = "/default-avatar.png";
+                                                e.target.onerror = null;
+                                            }}
+                                        />
+                                    ) : (
+                                        <div className="profile-pic-default">
+                                            {user.username?.charAt(0)?.toUpperCase() || "?"}
+                                        </div>
+                                    )}
+                                </div>
+                                <span className="profile-username">{user.username}</span>
                             </Link>
                         ) : (
                             <Link to="/login" className="auth-btn">
