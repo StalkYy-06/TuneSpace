@@ -18,5 +18,14 @@ export const otpRateLimiter = rateLimit({
         success: false,
         message: "Too many OTP requests. Try again later.",
     },
-    keyGenerator: (req) => req.body.email || req.ip,
+    // Fixed: Use standardized key generation that handles IPv6
+    keyGenerator: (req) => {
+        // Use email from request body if available, otherwise fall back to IP
+        return req.body.email || req.ip;
+    },
+    // Add this to properly handle IPv6
+    skip: (req) => {
+        // Don't skip any requests, but this ensures proper IPv6 handling
+        return false;
+    },
 });

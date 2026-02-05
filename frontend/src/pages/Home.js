@@ -211,12 +211,6 @@ export default function Home() {
             <Navbar />
 
             <div className="home">
-                {/* Hero Section */}
-                <section className="hero">
-                    <h1>Welcome to TuneSpace</h1>
-                    <p>Discover new music, share reviews, and connect with fellow music lovers</p>
-                </section>
-
                 {/* New Releases */}
                 <section className="section">
                     <h2>New Releases</h2>

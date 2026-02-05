@@ -6,6 +6,8 @@ import InputField from "../components/InputField";
 import GoogleIcon from "../icons/google.png";
 import OtpVerification from "./OtpVerification";
 
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
 export default function Login() {
     const [form, setForm] = useState({ usernameOrEmail: "", password: "" });
     const [errors, setErrors] = useState({});
@@ -20,7 +22,7 @@ export default function Login() {
         try {
             // First validate credentials
             const res = await axios.post(
-                "http://localhost:5000/api/auth/login",
+                `${API_URL}/api/auth/login`,
                 form,
                 { withCredentials: true }
             );
@@ -29,8 +31,8 @@ export default function Login() {
             setUserEmail(emailToUse);
 
             // If 2FA is required, send OTP using the specific endpoint
-            if (res.data.requires2FA) {
-                await axios.post("http://localhost:5000/api/auth/send-login-otp",
+            if (res.data.user.requires2FA) {
+                await axios.post(`${API_URL}/api/auth/send-login-otp`,
                     { email: emailToUse },
                     { withCredentials: true }
                 );
@@ -52,6 +54,12 @@ export default function Login() {
     // Successful OTP verification
     const handleOtpVerified = () => {
         navigate("/");
+    };
+
+    // Handle Google OAuth login
+    const handleGoogleLogin = () => {
+        // Redirect to backend Google OAuth endpoint
+        window.location.href = `${API_URL}/api/auth/google`;
     };
 
     if (otpPhase) {
@@ -107,7 +115,11 @@ export default function Login() {
                                 </div>
 
                                 <div className="google-btn-container">
-                                    <button type="button" className="google-btn">
+                                    <button
+                                        type="button"
+                                        className="google-btn"
+                                        onClick={handleGoogleLogin}
+                                    >
                                         <img src={GoogleIcon} alt="Google" className="google-icon" />
                                         Continue with Google
                                     </button>
