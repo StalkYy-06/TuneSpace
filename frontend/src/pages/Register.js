@@ -4,7 +4,6 @@ import axios from "axios";
 import "../styles/register.css";
 import InputField from "../components/InputField";
 import GoogleIcon from "../icons/google.png";
-import Logo from "../icons/logo.png";
 import OtpVerification from "./OtpVerification";
 
 export default function Register() {

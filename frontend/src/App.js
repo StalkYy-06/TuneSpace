@@ -4,6 +4,8 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
+import AlbumDetail from "./pages/AlbumDetail";
+import ArtistDetail from "./pages/ArtistDetail";
 
 function App() {
   return (
@@ -14,6 +16,8 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/album/:id" element={<AlbumDetail />} />
+        <Route path="/artist/:id" element={<ArtistDetail />} />
       </Routes>
     </BrowserRouter>
   );
