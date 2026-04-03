@@ -108,7 +108,8 @@ export default function Login() {
 
                                 {errors.general && <p className="error-msg">{errors.general}</p>}
 
-                                <button type="submit">Login</button>
+
+                                <button className="login-btn-container" type="submit">Login</button>
 
                                 <div className="or-separator">
                                     <span>OR</span>

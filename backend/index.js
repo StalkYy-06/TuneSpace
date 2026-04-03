@@ -8,7 +8,14 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import googleAuthRoutes from "./routes/googleAuthRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
+import reviewReplyRoutes from "./routes/reviewReplyRoutes.js";
 import passport from "./middleware/googleAuth.js";
+import adminAuthRoutes from './routes/adminAuthRoutes.js';
+import adminDashboardRoutes from './routes/adminDashboardRoutes.js';
+import UserFollow from './models/UserFollow.js';
+import userProfileRoutes from './routes/userProfileRoutes.js';
+import favouriteRoutes from './routes/favouriteRoutes.js';
 
 dotenv.config();
 
@@ -50,6 +57,12 @@ app.use("/uploads", express.static("uploads"));
 app.use("/api/auth", authRoutes);
 app.use("/api/auth", googleAuthRoutes); // Google OAuth routes
 app.use("/api/profile", profileRoutes);
+app.use("/api/reviews", reviewRoutes);
+app.use("/api/replies", reviewReplyRoutes);
+app.use('/api/admin/auth', adminAuthRoutes);
+app.use('/api/admin/dashboard', adminDashboardRoutes);
+app.use('/api/profile', userProfileRoutes);
+app.use('/api/favourites', favouriteRoutes);
 
 // Health check
 app.get("/", (req, res) => {

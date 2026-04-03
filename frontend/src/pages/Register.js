@@ -112,7 +112,9 @@ export default function Register() {
 
                                 {errors.general && <p className="error-msg">{errors.general}</p>}
 
-                                <button type="submit">Register</button>
+
+                                <button className="register-btn-container" type="submit">Register</button>
+
 
                                 <div className="or-separator">
                                     <span>OR</span>

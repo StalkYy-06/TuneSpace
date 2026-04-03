@@ -196,16 +196,6 @@ export default function Home() {
         navigate(`/artist/${artistId}`);
     };
 
-    if (loading) {
-        return (
-            <div className="home-wrapper">
-                <Navbar />
-                <div className="home-loading">Loading your music space...</div>
-                <BottomBar />
-            </div>
-        );
-    }
-
     return (
         <div className="home-wrapper">
             <Navbar />

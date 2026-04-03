@@ -172,7 +172,7 @@ html {
   padding-left: 8px;
 }
 
-button[type="submit"] {
+.login-btn-container {
   width: 100%;
   padding: 16px;
   background: rgba(255, 255, 255, 0.3);
@@ -186,7 +186,7 @@ button[type="submit"] {
   transition: all 0.3s ease;
 }
 
-button[type="submit"]:hover {
+.login-btn-container:hover {
   background: rgba(255, 255, 255, 0.45);
   transform: translateY(-2px);
 }

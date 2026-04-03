@@ -56,7 +56,9 @@
   overflow: hidden;
   border: 5px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .profile-picture-wrapper:hover {
@@ -355,6 +357,151 @@
   transform: translateY(-2px);
 }
 
+/* Tabs Section */
+.tabs-section {
+  border-bottom: 1px solid #282828;
+}
+
+.profile-tabs {
+  display: flex;
+  border-bottom: 1px solid #282828;
+  padding: 0 40px;
+}
+
+.tab-btn {
+  padding: 20px 28px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #b3b3b3;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: -1px;
+}
+
+.tab-btn:hover {
+  color: #e0e0e0;
+}
+
+.tab-btn.active {
+  color: #1db954;
+  border-bottom-color: #1db954;
+}
+
+.tab-content {
+  padding: 40px;
+}
+
+/* Reviews List */
+.reviews-list-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.review-item {
+  padding: 24px;
+  background: #0d0d0d;
+  border-radius: 12px;
+  border: 1px solid #282828;
+  transition: all 0.3s ease;
+}
+
+.review-item:hover {
+  border-color: #1db954;
+  box-shadow: 0 4px 16px rgba(29, 185, 84, 0.1);
+}
+
+.review-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.review-album-info {
+  flex: 1;
+}
+
+.review-album-title {
+  color: #e0e0e0;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.delete-review-btn {
+  padding: 6px 16px;
+  background: transparent;
+  color: #e74c3c;
+  border: 1px solid #e74c3c;
+  border-radius: 50px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  margin-left: 16px;
+}
+
+.delete-review-btn:hover {
+  background: #e74c3c;
+  color: white;
+}
+
+.review-rating {
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+  letter-spacing: 2px;
+}
+
+.review-text {
+  color: #b3b3b3;
+  line-height: 1.7;
+  font-size: 0.95rem;
+  margin: 0 0 14px 0;
+}
+
+.review-meta {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.review-date {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.review-likes {
+  color: #b3b3b3;
+  font-size: 0.85rem;
+}
+
+/* No Content State */
+.no-content-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #b3b3b3;
+}
+
+.no-content-icon {
+  font-size: 3.5rem;
+  margin-bottom: 16px;
+}
+
+.no-content-state h3 {
+  color: #e0e0e0;
+  font-size: 1.4rem;
+  margin: 0 0 10px 0;
+}
+
+.no-content-state p {
+  font-size: 1rem;
+  margin: 0;
+}
+
 /* Rating Distribution */
 .rating-distribution-section {
   padding: 40px;
@@ -449,13 +596,88 @@
   padding-bottom: 100%;
   background: linear-gradient(135deg, #333 0%, #111 100%);
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.album-cover-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2.5rem;
+  opacity: 0.4;
+}
+
+/* Favourite album card enhancements */
+.fav-album-item {
+  position: relative;
+}
+
+.album-cover-wrap {
+  position: relative;
+  width: 100%;
+  padding-bottom: 100%;
+  overflow: hidden;
+  border-radius: 12px 12px 0 0;
+}
+
+.album-cover-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition:
+    transform 0.4s ease,
+    filter 0.3s ease;
+}
+
+.fav-album-item:hover .album-cover-img {
+  transform: scale(1.08);
+  filter: brightness(0.7);
+}
+
+.album-remove-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(231, 76, 60, 0.85);
+  backdrop-filter: blur(6px);
+  border: none;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: all 0.25s ease;
+  z-index: 2;
+}
+
+.fav-album-item:hover .album-remove-btn {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.album-remove-btn:hover {
+  background: #e74c3c;
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.5);
+  transform: scale(1.15) !important;
 }
 
 .album-info {
   padding: 16px;
 }
 
-.album-title {
+.album-title-fav {
   color: #e0e0e0;
   font-weight: 700;
   font-size: 1rem;
@@ -465,64 +687,12 @@
   text-overflow: ellipsis;
 }
 
-.album-artist {
+.album-artist-fav {
   color: #b3b3b3;
   font-size: 0.9rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.reviews-list-profile {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.review-item {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 20px;
-  background: #0d0d0d;
-  border-radius: 12px;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  border: 1px solid #282828;
-}
-
-.review-item:hover {
-  background: #282828;
-  transform: translateX(8px);
-}
-
-.review-album-cover {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #333 0%, #111 100%);
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-
-.review-album-info {
-  flex: 1;
-}
-
-.review-album-title {
-  color: #e0e0e0;
-  font-weight: 700;
-  font-size: 1.1rem;
-  margin-bottom: 6px;
-}
-
-.review-album-artist {
-  color: #b3b3b3;
-  font-size: 0.95rem;
-}
-
-.review-rating {
-  color: #1db954;
-  font-size: 1.5rem;
 }
 
 /* Security Section */
@@ -724,6 +894,7 @@
   margin-bottom: 24px;
   font-family: monospace;
   letter-spacing: 2px;
+  box-sizing: border-box;
 }
 
 .delete-confirmation-input:focus {
@@ -788,9 +959,14 @@
   .profile-details,
   .security-section,
   .stats-section,
+  .tab-content,
   .rating-distribution-section,
   .list-section {
     padding: 30px;
+  }
+
+  .profile-tabs {
+    padding: 0 30px;
   }
 
   .stats-grid {
@@ -827,10 +1003,20 @@
   .profile-details,
   .security-section,
   .stats-section,
+  .tab-content,
   .rating-distribution-section,
   .list-section,
   .logout-section {
     padding: 24px 20px;
+  }
+
+  .profile-tabs {
+    padding: 0 20px;
+  }
+
+  .tab-btn {
+    padding: 16px 18px;
+    font-size: 0.9rem;
   }
 
   .security-section {
@@ -857,6 +1043,16 @@
 
   .rating-star-label {
     min-width: 80px;
+  }
+
+  .review-item-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .delete-review-btn {
+    margin-left: 0;
+    align-self: flex-start;
   }
 }
 
@@ -892,5 +1088,346 @@
 
   .albums-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Rating distribution - new layout with avg block */
+.profile-rating-inner {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+}
+
+.profile-avg-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 100px;
+  flex-shrink: 0;
+}
+
+.profile-avg-number {
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: #1db954;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+
+.profile-avg-stars {
+  display: flex;
+  gap: 3px;
+}
+
+.profile-avg-label {
+  font-size: 0.85rem;
+  color: #888;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.profile-dist-bars {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Override existing rating-bar-item to be slimmer */
+.profile-dist-bars .rating-bar-item {
+  display: grid;
+  grid-template-columns: 40px 1fr 36px;
+  gap: 12px;
+  align-items: center;
+}
+
+.profile-dist-bars .rating-star-label {
+  font-size: 0.85rem;
+  color: #b3b3b3;
+  font-weight: 600;
+  min-width: unset;
+}
+
+.profile-dist-bars .rating-bar {
+  height: 10px;
+  border-radius: 5px;
+  border: none;
+  background: #282828;
+}
+
+.profile-dist-bars .rating-bar-fill {
+  border-radius: 5px;
+}
+
+.profile-dist-bars .rating-count {
+  font-size: 0.8rem;
+  color: #888;
+  min-width: unset;
+  font-weight: 600;
+}
+
+/* ============================================
+   Activity Feed
+   ============================================ */
+
+.activity-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 60px 20px;
+  color: #888;
+  font-size: 0.95rem;
+}
+
+.activity-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(29, 185, 84, 0.2);
+  border-top-color: #1db954;
+  border-radius: 50%;
+  animation: act-spin 0.75s linear infinite;
+}
+
+@keyframes act-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.activity-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+}
+
+/* vertical timeline line */
+.activity-feed::before {
+  content: "";
+  position: absolute;
+  left: 26px;
+  top: 20px;
+  bottom: 20px;
+  width: 2px;
+  background: linear-gradient(
+    to bottom,
+    #1db954 0%,
+    rgba(29, 185, 84, 0.08) 100%
+  );
+  pointer-events: none;
+  border-radius: 2px;
+}
+
+/* ─── Individual activity item ── */
+.act-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 18px 16px 18px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.18s ease;
+  border-radius: 12px;
+  margin-bottom: 2px;
+  position: relative;
+}
+
+.act-item:last-child {
+  border-bottom: none;
+}
+
+.act-item:hover {
+  background: rgba(255, 255, 255, 0.035);
+  transform: translateX(4px);
+}
+
+/* ─── Icon/avatar wrap ── */
+.act-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 20px;
+  position: relative;
+  z-index: 1;
+  margin-left: 5px;
+}
+
+.act-icon-review {
+  background: rgba(29, 185, 84, 0.15);
+  border: 2px solid rgba(29, 185, 84, 0.3);
+}
+.act-icon-follow {
+  background: rgba(33, 150, 243, 0.12);
+  border: 2px solid rgba(33, 150, 243, 0.25);
+  padding: 3px;
+  overflow: hidden;
+}
+.act-icon-follower {
+  background: rgba(255, 193, 7, 0.12);
+  border: 2px solid rgba(255, 193, 7, 0.25);
+  padding: 3px;
+  overflow: hidden;
+}
+.act-icon-like {
+  background: rgba(255, 59, 59, 0.12);
+  border: 2px solid rgba(255, 59, 59, 0.25);
+}
+
+/* avatar inside icon-wrap */
+.act-avatar-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.act-avatar-letter {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1db954, #1ed760);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+}
+
+/* ─── Body ── */
+.act-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-top: 2px;
+}
+
+.act-main-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.act-verb {
+  color: #888;
+  font-weight: 500;
+}
+
+.act-subject {
+  color: #e0e0e0;
+  font-weight: 700;
+}
+
+.act-user-link {
+  color: #1db954;
+}
+
+.act-stars {
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  margin-left: 2px;
+}
+
+.act-excerpt {
+  color: #888;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin: 0;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 420px;
+}
+
+.act-time {
+  font-size: 0.75rem;
+  color: #555;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* ─── Type badge ── */
+.act-type-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.act-badge-review {
+  background: rgba(29, 185, 84, 0.12);
+  color: #1db954;
+  border: 1px solid rgba(29, 185, 84, 0.25);
+}
+.act-badge-follow {
+  background: rgba(33, 150, 243, 0.12);
+  color: #64b5f6;
+  border: 1px solid rgba(33, 150, 243, 0.25);
+}
+.act-badge-follower {
+  background: rgba(255, 193, 7, 0.12);
+  color: #ffc107;
+  border: 1px solid rgba(255, 193, 7, 0.25);
+}
+.act-badge-like {
+  background: rgba(255, 59, 59, 0.12);
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 59, 59, 0.25);
+}
+
+/* ─── Hover accent per type ── */
+.act-reviewed:hover {
+  background: rgba(29, 185, 84, 0.04);
+}
+.act-followed:hover {
+  background: rgba(33, 150, 243, 0.04);
+}
+.act-new-follower:hover {
+  background: rgba(255, 193, 7, 0.04);
+}
+.act-liked:hover {
+  background: rgba(255, 59, 59, 0.04);
+}
+
+/* ─── Responsive ── */
+@media (max-width: 600px) {
+  .activity-feed::before {
+    left: 22px;
+  }
+
+  .act-icon-wrap {
+    width: 38px;
+    height: 38px;
+    font-size: 16px;
+  }
+
+  .act-type-badge {
+    display: none;
+  }
+
+  .act-excerpt {
+    max-width: 240px;
+  }
+
+  .act-main-line {
+    font-size: 0.85rem;
   }
 }

@@ -66,15 +66,6 @@ export default function Contact() {
                             We'd love to hear from you.
                         </p>
                     </div>
-                    <div className="contact-hero-decoration">
-                        <div className="sound-wave">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </div>
-                    </div>
                 </div>
 
                 <div className="contact-container">
@@ -97,7 +88,7 @@ export default function Contact() {
                                             value={formData.name}
                                             onChange={handleChange}
                                             required
-                                            placeholder="John Doe"
+                                            placeholder="Name"
                                         />
                                     </div>
 
@@ -110,7 +101,7 @@ export default function Contact() {
                                             value={formData.email}
                                             onChange={handleChange}
                                             required
-                                            placeholder="john@example.com"
+                                            placeholder="example@gmail.com"
                                         />
                                     </div>
                                 </div>
@@ -162,7 +153,7 @@ export default function Contact() {
                             <div className="info-card">
                                 <div className="info-icon">✉️</div>
                                 <h3>Email Us</h3>
-                                <p>support@tunespace.com</p>
+                                <p>tunespace25@gmail.com</p>
                                 <p className="info-detail">We typically respond within 24 hours</p>
                             </div>
 
@@ -200,7 +191,7 @@ export default function Contact() {
                         <div className="faq-grid">
                             <div className="faq-item">
                                 <h4>How do I report a bug?</h4>
-                                <p>Use the contact form above with "Bug Report" as the subject, or email us directly at support@tunespace.com</p>
+                                <p>Use the contact form above with "Bug Report" as the subject, or email us directly at tunespace25@gmail.com</p>
                             </div>
                             <div className="faq-item">
                                 <h4>Can I suggest new features?</h4>

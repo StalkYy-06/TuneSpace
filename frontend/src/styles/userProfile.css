@@ -1,0 +1,741 @@
+/* ============================================
+   UserProfile Page — Design system matches Profile.js
+   ============================================ */
+
+.up-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #0d0d0d;
+}
+
+.up-content {
+  flex: 1;
+  padding: 32px 20px 80px;
+  max-width: 1000px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.up-container {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* Back Button */
+.up-back-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e0e0e0;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  text-decoration: none;
+}
+
+.up-back-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(-4px);
+}
+
+/* Loading State */
+.up-loading {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: #b3b3b3;
+  min-height: 60vh;
+  font-size: 1.1rem;
+}
+
+.up-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(29, 185, 84, 0.2);
+  border-top-color: #1db954;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Error State */
+.up-error-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 60vh;
+  text-align: center;
+}
+
+.up-error-icon {
+  font-size: 64px;
+  opacity: 0.5;
+}
+
+.up-error-state h2 {
+  font-size: 2rem;
+  color: #fff;
+  margin: 0;
+}
+
+.up-error-state p {
+  color: #b3b3b3;
+  margin: 0;
+}
+
+/* Profile Header Card */
+.up-profile-header {
+  background: #181818;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  border: 1px solid #282828;
+  position: relative;
+}
+
+.up-header-gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 160px;
+  background: linear-gradient(135deg, #1db954 0%, #191414 100%);
+  pointer-events: none;
+}
+
+.up-header-content {
+  position: relative;
+  padding: 40px 40px 40px;
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+  padding-top: 110px; /* push below gradient */
+}
+
+/* Avatar */
+.up-avatar-wrap {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 5px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  background: #282828;
+  position: relative;
+  top: -50px;
+  margin-bottom: -50px;
+}
+
+.up-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.up-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #1db954, #1ed760);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: white;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Header Info */
+.up-header-info {
+  flex: 1;
+  min-width: 0;
+  padding-top: 20px;
+}
+
+.up-username {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 10px;
+  letter-spacing: -0.5px;
+}
+
+.up-bio {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+
+.up-meta {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.up-meta-item {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Stats Row */
+.up-stats-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.up-stat-box {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 14px 18px;
+  text-align: center;
+  min-width: 80px;
+  transition: all 0.25s ease;
+}
+
+.up-stat-box:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(29, 185, 84, 0.3);
+  transform: translateY(-2px);
+}
+
+.up-stat-value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1db954;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.up-stat-label {
+  font-size: 0.75rem;
+  color: #888;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Action Row */
+.up-action-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.up-follow-btn {
+  padding: 12px 32px;
+  background: linear-gradient(135deg, #1db954, #1ed760);
+  border: none;
+  border-radius: 50px;
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 0.5px;
+  box-shadow: 0 6px 20px rgba(29, 185, 84, 0.3);
+}
+
+.up-follow-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(29, 185, 84, 0.5);
+}
+
+.up-follow-btn.following {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: #e0e0e0;
+  box-shadow: none;
+}
+
+.up-follow-btn.following:hover {
+  background: rgba(255, 59, 59, 0.15);
+  border-color: rgba(255, 59, 59, 0.4);
+  color: #ff6b6b;
+}
+
+.up-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 32px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50px;
+  color: #e0e0e0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-decoration: none;
+  letter-spacing: 0.5px;
+}
+
+.up-edit-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Section Title */
+.up-section-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 20px;
+}
+
+/* Rating Distribution Section */
+.up-rating-section {
+  background: #181818;
+  border: 1px solid #282828;
+  border-radius: 20px;
+  padding: 32px 36px;
+}
+
+.up-rating-inner {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+}
+
+.up-rating-avg-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 100px;
+  flex-shrink: 0;
+}
+
+.up-avg-number {
+  font-size: 4rem;
+  font-weight: 900;
+  color: #1db954;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+
+.up-avg-stars {
+  font-size: 1.2rem;
+  display: flex;
+  gap: 3px;
+}
+
+.up-avg-label {
+  font-size: 0.85rem;
+  color: #888;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Distribution bars */
+.up-dist-bars {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.up-dist-row {
+  display: grid;
+  grid-template-columns: 18px 16px 1fr 36px;
+  gap: 10px;
+  align-items: center;
+}
+
+.up-dist-num {
+  font-size: 0.85rem;
+  color: #b3b3b3;
+  font-weight: 700;
+  text-align: right;
+}
+
+.up-dist-star {
+  color: #1db954;
+  font-size: 0.85rem;
+}
+
+.up-dist-track {
+  background: #282828;
+  border-radius: 4px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.up-dist-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1db954, #1ed760);
+  border-radius: 4px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 2px;
+}
+
+.up-dist-count {
+  font-size: 0.8rem;
+  color: #888;
+  text-align: right;
+  font-weight: 600;
+}
+
+/* Reviews Section */
+.up-reviews-section {
+  background: #181818;
+  border: 1px solid #282828;
+  border-radius: 20px;
+  padding: 32px 36px;
+}
+
+.up-no-reviews {
+  text-align: center;
+  padding: 48px 20px;
+  color: #b3b3b3;
+}
+
+.up-no-reviews-icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+  opacity: 0.4;
+}
+
+.up-no-reviews h3 {
+  font-size: 1.4rem;
+  color: #e0e0e0;
+  margin: 0 0 8px;
+}
+
+.up-no-reviews p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* Reviews List */
+.up-reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.up-review-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 20px 24px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.up-review-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(29, 185, 84, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* Album image + name in review */
+.up-review-album-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.up-review-album-img {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.up-review-album-info {
+  min-width: 0;
+}
+
+.up-review-album-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1db954;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.up-review-type {
+  font-size: 0.78rem;
+  color: #888;
+  text-transform: capitalize;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* Stars */
+.up-review-stars {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-bottom: 10px;
+  font-size: 1rem;
+}
+
+.up-star {
+  color: #333;
+}
+
+.up-star.filled {
+  color: #ffc107;
+}
+
+.up-rating-num {
+  font-size: 0.8rem;
+  color: #888;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+/* Review text */
+.up-review-text {
+  color: #d0d0d0;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  margin: 0 0 14px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Review footer */
+.up-review-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.up-review-date {
+  font-size: 0.82rem;
+  color: #888;
+}
+
+.up-review-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.82rem;
+  color: #888;
+}
+
+.up-view-hint {
+  color: #1db954;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+/* ─── Favourite Albums Section ─── */
+.up-favourites-section {
+  background: #181818;
+  border: 1px solid #282828;
+  border-radius: 20px;
+  padding: 32px 36px;
+}
+
+.up-favourites-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 20px;
+}
+
+.up-fav-card {
+  background: #0d0d0d;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #282828;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.up-fav-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+  border-color: #1db954;
+}
+
+.up-fav-cover {
+  position: relative;
+  width: 100%;
+  padding-bottom: 100%;
+  overflow: hidden;
+}
+
+.up-fav-cover-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.up-fav-card:hover .up-fav-cover-img {
+  transform: scale(1.08);
+}
+
+.up-fav-cover-placeholder {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #333 0%, #111 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  opacity: 0.4;
+}
+
+.up-fav-info {
+  padding: 14px;
+}
+
+.up-fav-name {
+  color: #e0e0e0;
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.up-fav-artist {
+  color: #888;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .up-content {
+    padding: 20px 16px 80px;
+  }
+
+  .up-header-content {
+    flex-direction: column;
+    align-items: center;
+    padding: 90px 24px 28px;
+    text-align: center;
+  }
+
+  .up-avatar-wrap {
+    top: -60px;
+    margin-bottom: -40px;
+    width: 110px;
+    height: 110px;
+  }
+
+  .up-header-info {
+    padding-top: 0;
+  }
+
+  .up-username {
+    font-size: 2rem;
+  }
+
+  .up-stats-row {
+    justify-content: center;
+  }
+
+  .up-action-row {
+    justify-content: center;
+  }
+
+  .up-rating-inner {
+    flex-direction: column;
+    gap: 20px;
+    align-items: stretch;
+  }
+
+  .up-rating-avg-block {
+    flex-direction: row;
+    justify-content: center;
+    gap: 16px;
+    min-width: unset;
+    align-items: center;
+  }
+
+  .up-avg-number {
+    font-size: 3rem;
+  }
+
+  .up-reviews-section,
+  .up-rating-section,
+  .up-favourites-section {
+    padding: 24px 20px;
+  }
+
+  .up-favourites-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .up-username {
+    font-size: 1.7rem;
+  }
+
+  .up-stats-row {
+    gap: 8px;
+  }
+
+  .up-stat-box {
+    padding: 10px 14px;
+    min-width: 60px;
+  }
+
+  .up-stat-value {
+    font-size: 1.3rem;
+  }
+
+  .up-follow-btn,
+  .up-edit-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .up-review-album-row {
+    gap: 10px;
+  }
+
+  .up-review-album-img {
+    width: 44px;
+    height: 44px;
+  }
+}

@@ -6,6 +6,7 @@ import "../styles/navbar.css";
 
 export default function Navbar() {
     const [user, setUser] = useState(null);
+    const [isAdmin, setIsAdmin] = useState(false);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
@@ -24,16 +25,52 @@ export default function Navbar() {
                 setLoading(false);
             }
         };
+
+        const checkAdminAuth = async () => {
+            try {
+                const response = await fetch("http://localhost:5000/api/admin/auth/check", {
+                    credentials: "include"
+                });
+                const data = await response.json();
+                if (data.success && data.authenticated) {
+                    setIsAdmin(true);
+                }
+            } catch (err) {
+                // Not admin, ignore error
+                setIsAdmin(false);
+            }
+        };
+
         fetchUser();
+        checkAdminAuth();
     }, []);
 
     const handleLogout = async () => {
         try {
+            // Logout from admin if logged in as admin
+            if (isAdmin) {
+                await fetch("http://localhost:5000/api/admin/auth/logout", {
+                    method: "POST",
+                    credentials: "include"
+                });
+                setIsAdmin(false);
+            }
+
+            // Logout from regular user account
             await axios.post("http://localhost:5000/api/auth/logout", {}, { withCredentials: true });
             setUser(null);
             navigate("/");
         } catch (err) {
             console.error("Logout failed");
+        }
+    };
+
+    const handleProfileClick = (e) => {
+        e.preventDefault();
+        if (isAdmin) {
+            navigate("/admin/dashboard");
+        } else {
+            navigate("/profile");
         }
     };
 
@@ -63,7 +100,7 @@ export default function Navbar() {
 
                     <div className="auth-section">
                         {user ? (
-                            <Link to="/profile" className="profile-btn">
+                            <a href="/profile" className="profile-btn" onClick={handleProfileClick}>
                                 {/* Profile Picture Circle */}
                                 <div className="profile-pic-container">
                                     {user.profilePicture ? (
@@ -82,8 +119,8 @@ export default function Navbar() {
                                         </div>
                                     )}
                                 </div>
-                                <span className="profile-username">{user.username}</span>
-                            </Link>
+                                <span className="profile-username-nav">{user.username}</span>
+                            </a>
                         ) : (
                             <Link to="/login" className="auth-btn">
                                 Login

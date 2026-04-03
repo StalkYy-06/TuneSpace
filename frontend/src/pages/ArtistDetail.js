@@ -1,8 +1,9 @@
 // src/pages/ArtistDetail.js
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import BottomBar from "../components/BottomBar";
+import ReviewModal from "../components/ReviewModal";
 import "../styles/artistDetail.css";
 
 export default function ArtistDetail() {
@@ -13,6 +14,13 @@ export default function ArtistDetail() {
     const [albums, setAlbums] = useState([]);
     const [relatedArtists, setRelatedArtists] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+    const [reviews, setReviews] = useState([]);
+    const [averageRating, setAverageRating] = useState(0);
+    const [userReview, setUserReview] = useState(null);
+    const [userId, setUserId] = useState(null);
+    const [likedReviews, setLikedReviews] = useState({});
+    const [replyCounts, setReplyCounts] = useState({});
 
     // Placeholder artists data
     const artistsData = {
@@ -199,6 +207,7 @@ export default function ArtistDetail() {
     });
 
     useEffect(() => {
+        checkAuth();
         // Simulate API call delay
         setTimeout(() => {
             const artistData = artistsData[id];
@@ -208,7 +217,103 @@ export default function ArtistDetail() {
             setRelatedArtists(artistData?.relatedArtists || []);
             setLoading(false);
         }, 300);
+
+        // Fetch reviews
+        fetchReviews();
     }, [id]);
+
+    const checkAuth = async () => {
+        try {
+            const response = await fetch("http://localhost:5000/api/auth/check", {
+                credentials: "include"
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data.authenticated && data.user) {
+                    setUserId(data.user.id);
+                }
+            }
+        } catch (err) {
+            console.error("Error checking auth:", err);
+        }
+    };
+
+    const fetchReplyCount = async (reviewId) => {
+        try {
+            const response = await fetch(
+                `http://localhost:5000/api/replies/review/${reviewId}/count`,
+                { credentials: "include" }
+            );
+            const data = await response.json();
+            if (data.success) {
+                setReplyCounts(prev => ({ ...prev, [reviewId]: data.count }));
+            }
+        } catch (err) {
+            console.error("Error fetching reply count:", err);
+        }
+    };
+
+    useEffect(() => {
+        if (reviews.length > 0) {
+            reviews.forEach(review => {
+                fetchReplyCount(review._id);
+            });
+        }
+    }, [reviews]);
+
+    const fetchReviews = async () => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/reviews/artist/${id}`);
+            const data = await response.json();
+            if (data.success) {
+                setReviews(data.reviews);
+                setAverageRating(data.averageRating);
+            }
+
+            // Fetch user's review if logged in
+            const userReviewResponse = await fetch(`http://localhost:5000/api/reviews/artist/${id}/user`, {
+                credentials: "include"
+            });
+            const userData = await userReviewResponse.json();
+            if (userData.success) {
+                setUserReview(userData.review);
+            }
+        } catch (err) {
+            console.error("Error fetching reviews:", err);
+        }
+    };
+
+    const handleReviewSubmit = async (newReview) => {
+        setUserReview(newReview);
+        await fetchReviews();
+    };
+
+    const handleLikeReview = async (reviewId) => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/reviews/${reviewId}/like`, {
+                method: "POST",
+                credentials: "include"
+            });
+            const data = await response.json();
+            if (data.success) {
+                setReviews(prevReviews =>
+                    prevReviews.map(review =>
+                        review._id === reviewId
+                            ? { ...review, likes: data.likes }
+                            : review
+                    )
+                );
+                setLikedReviews(prev => ({
+                    ...prev,
+                    [reviewId]: data.isLiked
+                }));
+            } else if (response.status === 401) {
+                navigate("/login");
+            }
+        } catch (err) {
+            console.error("Error liking review:", err);
+        }
+    };
 
     const formatDuration = (milliseconds) => {
         const totalSeconds = Math.floor(milliseconds / 1000);
@@ -217,15 +322,6 @@ export default function ArtistDetail() {
         return `${mins}:${String(secs).padStart(2, '0')}`;
     };
 
-    if (loading) {
-        return (
-            <div className="artist-detail-wrapper">
-                <Navbar />
-                <div className="artist-loading">Loading artist...</div>
-                <BottomBar />
-            </div>
-        );
-    }
 
     if (!artist) {
         return (
@@ -279,6 +375,137 @@ export default function ArtistDetail() {
                         )}
                     </div>
                 </div>
+
+                {/* Review Section */}
+                <div className="artist-section">
+                    {/* Rating Stats */}
+                    {reviews.length > 0 && (() => {
+                        const dist = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+                        reviews.forEach(r => { if (r.rating >= 1 && r.rating <= 5) dist[Math.round(r.rating)]++; });
+                        const maxD = Math.max(...Object.values(dist), 1);
+                        return (
+                            <div className="artist-rating-stats">
+                                <div className="artist-rating-block">
+                                    <div className="artist-rating-number">{Number(averageRating).toFixed(1)}</div>
+                                    <div className="artist-rating-stars-row">
+                                        {[1, 2, 3, 4, 5].map(i => (
+                                            <span key={i} style={{ color: i <= Math.round(averageRating) ? "#1db954" : "#333", fontSize: "1.3rem" }}>★</span>
+                                        ))}
+                                    </div>
+                                    <div className="artist-rating-count">{reviews.length} reviews</div>
+                                </div>
+                                <div className="artist-dist-bars">
+                                    {[5, 4, 3, 2, 1].map(star => (
+                                        <div key={star} className="dist-row">
+                                            <span className="dist-label">{star}</span>
+                                            <span className="dist-star">★</span>
+                                            <div className="dist-bar-track">
+                                                <div className="dist-bar-fill" style={{ width: `${(dist[star] / maxD) * 100}%` }} />
+                                            </div>
+                                            <span className="dist-count">{dist[star]}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    })()}
+
+                    <div className="artist-reviews-header">
+                        <h2>Reviews & Ratings</h2>
+                        <div className="artist-reviews-header-actions">
+                            <button
+                                className="btn-write-review"
+                                onClick={() => setIsReviewModalOpen(true)}
+                            >
+                                ✎ Write a Review
+                            </button>
+                            {reviews.length > 0 && (
+                                <Link
+                                    to={`/reviews/artist/${id}`}
+                                    className="view-all-btn-artist"
+                                >
+                                    View All →
+                                </Link>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="reviews-container">
+                        {reviews.length === 0 ? (
+                            <p className="no-reviews">No reviews yet. Be the first to review this artist!</p>
+                        ) : (
+                            reviews.slice(0, 5).map((review) => (
+                                <div key={review._id} className="review-card"
+                                    onClick={() => navigate(`/reviews/artist/${id}`, { state: { reviewId: review._id } })}
+                                    style={{ cursor: "pointer" }}
+                                >
+                                    <div className="review-header-section">
+                                        <div className="review-avatar">
+                                            {review.username?.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div className="review-user-details">
+                                            <div className="review-username"
+                                                onClick={e => { e.stopPropagation(); navigate(`/profile/${review.username}`); }}
+                                            >{review.username}</div>
+                                            <div className="review-rating">
+                                                {[...Array(5)].map((_, i) => (
+                                                    <span key={i} className={i < review.rating ? "star filled" : "star"}>★</span>
+                                                ))}
+                                                <span className="rating-num">{review.rating}/5</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="review-content">
+                                        {review.reviewText || "(No review text)"}
+                                    </div>
+
+                                    <div className="review-footer">
+                                        <div className="review-meta-info">
+                                            <span className="review-date">
+                                                {new Date(review.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                                            </span>
+                                            {replyCounts[review._id] > 0 && (
+                                                <span className="review-replies-link">
+                                                    💬 {replyCounts[review._id]} {replyCounts[review._id] === 1 ? "reply" : "replies"}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="review-actions" onClick={e => e.stopPropagation()}>
+                                            <button
+                                                className={`review-action-btn ${likedReviews[review._id] ? "liked" : ""}`}
+                                                onClick={() => handleLikeReview(review._id)}
+                                            >
+                                                <span className="action-icon">❤️</span>
+                                                <span className="action-count">{review.likes || 0}</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    {reviews.length > 5 && (
+                        <div className="more-reviews-notice">
+                            <Link to={`/reviews/artist/${id}`} className="see-more-btn">
+                                See all {reviews.length} reviews →
+                            </Link>
+                        </div>
+                    )}
+                </div>
+
+                {/* Review Modal */}
+                <ReviewModal
+                    isOpen={isReviewModalOpen}
+                    onClose={() => setIsReviewModalOpen(false)}
+                    contentType="artist"
+                    contentId={id}
+                    contentName={artist?.name}
+                    contentImage={artist?.images?.[0]?.url}
+                    onReviewSubmit={handleReviewSubmit}
+                    existingReview={userReview}
+                />
 
                 {/* Top Tracks */}
                 {topTracks.length > 0 && (

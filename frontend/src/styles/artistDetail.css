@@ -358,6 +358,124 @@
   object-fit: cover;
 }
 
+/* Review Section */
+.section-header-with-button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.section-header-with-button h2 {
+  margin: 0;
+}
+
+.rating-summary {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 0.95rem;
+  color: #b3b3b3;
+}
+
+.rating-stars {
+  color: #ffc107;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.btn-write-review {
+  background: linear-gradient(135deg, #1db954 0%, #17a34a 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 50px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 15px rgba(29, 185, 84, 0.4);
+}
+
+.btn-write-review:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(29, 185, 84, 0.6);
+}
+
+.btn-write-review:active {
+  transform: translateY(-1px);
+}
+
+/* Reviews List */
+.reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.review-item {
+  background: #181818;
+  border: 1px solid #282828;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.review-item:hover {
+  background: #1f1f1f;
+  border-color: #1db954;
+  box-shadow: 0 4px 12px rgba(29, 185, 84, 0.2);
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 16px;
+}
+
+.reviewer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reviewer-info strong {
+  color: #e0e0e0;
+  font-size: 1rem;
+}
+
+.review-date {
+  color: #b3b3b3;
+  font-size: 0.85rem;
+}
+
+.review-rating {
+  color: #ffc107;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.review-text {
+  color: #d0d0d0;
+  line-height: 1.6;
+  margin: 0;
+  word-wrap: break-word;
+}
+
+.no-reviews {
+  text-align: center;
+  color: #b3b3b3;
+  padding: 40px 20px;
+  background: #181818;
+  border-radius: 12px;
+  border: 1px dashed #282828;
+  margin: 0;
+}
+
 .related-artist-info h3 {
   font-size: 1.1rem;
   font-weight: 600;
@@ -484,5 +602,415 @@
   .related-artist-image {
     width: 100px;
     height: 100px;
+  }
+}
+/* Add these styles to your existing albumDetail.css */
+
+/* View All Reviews Section */
+.view-all-reviews-section {
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.view-all-reviews-btn {
+  background: linear-gradient(135deg, #1db954, #1ed760);
+  border: none;
+  border-radius: 50px;
+  padding: 14px 32px;
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  box-shadow: 0 6px 20px rgba(29, 185, 84, 0.3);
+}
+
+.view-all-reviews-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(29, 185, 84, 0.5);
+}
+
+.view-all-reviews-btn .btn-icon {
+  font-size: 18px;
+}
+
+.view-all-reviews-btn .btn-text {
+  letter-spacing: 0.5px;
+}
+
+.view-all-reviews-btn .btn-arrow {
+  font-size: 20px;
+  font-weight: bold;
+  transition: transform 0.3s ease;
+}
+
+.view-all-reviews-btn:hover .btn-arrow {
+  transform: translateX(4px);
+}
+
+/* Review Meta Info Updates */
+.review-meta-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.review-date {
+  font-size: 13px;
+  color: #b3b3b3;
+}
+
+.review-replies-link {
+  font-size: 13px;
+  color: #1db954;
+  font-weight: 600;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s ease;
+}
+
+.review-replies-link:hover {
+  color: #1ed760;
+  text-decoration: underline;
+}
+
+/* More Reviews Notice */
+.more-reviews-notice {
+  margin-top: 20px;
+  text-align: center;
+  padding: 20px;
+  background: rgba(29, 185, 84, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(29, 185, 84, 0.2);
+}
+
+.see-more-btn {
+  color: #1db954;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.see-more-btn:hover {
+  color: #1ed760;
+  transform: translateX(4px);
+}
+
+/* Review Card Updates for Better Layout */
+.review-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+}
+
+.review-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(29, 185, 84, 0.3);
+  transform: translateY(-2px);
+}
+
+.review-header-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.review-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1db954, #1ed760);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.review-user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.review-username {
+  font-weight: 600;
+  color: #e0e0e0;
+  font-size: 15px;
+}
+
+.review-rating {
+  display: flex;
+  gap: 2px;
+  font-size: 16px;
+}
+
+.review-rating .star {
+  color: #666;
+}
+
+.review-rating .star.filled {
+  color: #ffc107;
+}
+
+.review-content {
+  color: #e0e0e0;
+  line-height: 1.6;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.review-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Responsive Updates */
+@media (max-width: 768px) {
+  .view-all-reviews-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 24px;
+  }
+
+  .review-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .review-meta-info {
+    width: 100%;
+  }
+
+  .review-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .view-all-reviews-btn .btn-text {
+    font-size: 14px;
+  }
+
+  .review-card {
+    padding: 16px;
+  }
+
+  .review-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+}
+
+/* Artist Rating Stats Block */
+.artist-rating-stats {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 28px 32px;
+  margin-bottom: 28px;
+}
+
+.artist-rating-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 100px;
+  flex-shrink: 0;
+}
+
+.artist-rating-number {
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: #1db954;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+
+.artist-rating-stars-row {
+  display: flex;
+  gap: 3px;
+}
+
+.artist-rating-count {
+  font-size: 0.85rem;
+  color: #888;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.artist-dist-bars {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Reuse dist-row classes from albumDetail additions */
+.dist-row {
+  display: grid;
+  grid-template-columns: 18px 16px 1fr 36px;
+  gap: 10px;
+  align-items: center;
+}
+
+.dist-label {
+  font-size: 0.85rem;
+  color: #b3b3b3;
+  font-weight: 700;
+  text-align: right;
+}
+
+.dist-star {
+  color: #1db954;
+  font-size: 0.85rem;
+}
+
+.dist-bar-track {
+  background: #282828;
+  border-radius: 4px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.dist-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1db954, #1ed760);
+  border-radius: 4px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 2px;
+}
+
+.dist-count {
+  font-size: 0.8rem;
+  color: #888;
+  text-align: right;
+  font-weight: 600;
+}
+
+/* Artist reviews header with right-aligned view all */
+.artist-reviews-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.artist-reviews-header h2 {
+  margin: 0;
+}
+
+.artist-reviews-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.view-all-btn-artist {
+  padding: 9px 20px;
+  background: transparent;
+  color: #1db954;
+  border: 2px solid #1db954;
+  border-radius: 50px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.view-all-btn-artist:hover {
+  background: rgba(29, 185, 84, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(29, 185, 84, 0.2);
+}
+
+/* Clickable username in reviews */
+.review-username {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.review-username:hover {
+  color: #1db954 !important;
+  text-decoration: underline;
+}
+
+/* Inline rating num */
+.rating-num {
+  font-size: 12px;
+  color: #888;
+  margin-left: 8px;
+  font-weight: 600;
+}
+
+/* Review card clickable */
+.review-card {
+  cursor: pointer;
+  transition: all 0.25s ease !important;
+}
+
+.review-card:hover {
+  border-color: rgba(29, 185, 84, 0.4) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35) !important;
+}
+
+@media (max-width: 768px) {
+  .artist-rating-stats {
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    align-items: stretch;
+  }
+
+  .artist-rating-block {
+    align-items: center;
+    min-width: unset;
+  }
+
+  .artist-reviews-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .artist-reviews-header-actions {
+    margin-left: 0;
+    width: 100%;
   }
 }

@@ -31,7 +31,7 @@ router.get("/me", protect, async (req, res) => {
     }
 });
 
-// Update Profile (username, bio)
+// Update Profile (username, bio) - PUT route
 router.put("/update", protect, async (req, res) => {
     const { username, bio } = req.body;
 
@@ -96,6 +96,44 @@ router.put("/update", protect, async (req, res) => {
             });
         }
         res.status(500).json({ success: false, message: "Server error" });
+    }
+});
+
+// Update Bio Only - PATCH route (for simple bio updates from new Profile page)
+router.patch("/update", protect, async (req, res) => {
+    try {
+        const { bio } = req.body;
+
+        if (bio && bio.length > 200) {
+            return res.status(400).json({
+                success: false,
+                message: "Bio must be 200 characters or less"
+            });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            req.user.id,
+            { bio: bio || "" },
+            { new: true }
+        ).select("-password");
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        res.json({
+            success: true,
+            message: "Bio updated successfully",
+            user: {
+                username: user.username,
+                email: user.email,
+                profilePicture: user.profilePicture,
+                bio: user.bio,
+            }
+        });
+    } catch (err) {
+        console.error("Error updating profile:", err);
+        res.status(500).json({ success: false, message: "Error updating profile" });
     }
 });
 

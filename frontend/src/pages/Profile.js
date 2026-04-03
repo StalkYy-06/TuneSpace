@@ -7,13 +7,165 @@ import "../styles/profile.css";
 
 const API_URL = "http://localhost:5000";
 
+// ─── Activity helpers ────────────────────────────────────────────────
+function timeAgo(dateStr) {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 7) return `${days}d ago`;
+    return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function ActivityAvatar({ username, picture, API_URL, size = 36 }) {
+    if (picture) {
+        return (
+            <img
+                src={`${API_URL}${picture}`}
+                alt={username}
+                className="act-avatar-img"
+                style={{ width: size, height: size }}
+                onError={e => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }}
+            />
+        );
+    }
+    return (
+        <div className="act-avatar-letter" style={{ width: size, height: size, fontSize: size * 0.42 }}>
+            {username?.charAt(0).toUpperCase()}
+        </div>
+    );
+}
+
+function ActivityItem({ activity, navigate, API_URL }) {
+    const { type, timestamp } = activity;
+    const ago = timeAgo(timestamp);
+
+    const starRow = (rating) => (
+        <span className="act-stars">
+            {[1, 2, 3, 4, 5].map(i => (
+                <span key={i} style={{ color: i <= rating ? "#1db954" : "#333" }}>★</span>
+            ))}
+        </span>
+    );
+
+    if (type === "reviewed") {
+        const icon = activity.contentType === "artist" ? "🎤" : "💿";
+        return (
+            <div
+                className="act-item act-reviewed"
+                onClick={() => navigate(`/reviews/${activity.contentType}/${activity.contentId}`)}
+            >
+                <div className="act-icon-wrap act-icon-review">{icon}</div>
+                <div className="act-body">
+                    <div className="act-main-line">
+                        <span className="act-verb">You reviewed</span>
+                        <span className="act-subject">{activity.contentName}</span>
+                        {starRow(activity.rating)}
+                    </div>
+                    {activity.reviewText && (
+                        <p className="act-excerpt">"{activity.reviewText.slice(0, 100)}{activity.reviewText.length > 100 ? "…" : ""}"</p>
+                    )}
+                    <span className="act-time">{ago}</span>
+                </div>
+                <div className="act-type-badge act-badge-review">Review</div>
+            </div>
+        );
+    }
+
+    if (type === "followed_user") {
+        return (
+            <div
+                className="act-item act-followed"
+                onClick={() => navigate(`/profile/${activity.targetUsername}`)}
+            >
+                <div className="act-icon-wrap act-icon-follow">
+                    <ActivityAvatar
+                        username={activity.targetUsername}
+                        picture={activity.targetProfilePicture}
+                        API_URL={API_URL}
+                        size={36}
+                    />
+                </div>
+                <div className="act-body">
+                    <div className="act-main-line">
+                        <span className="act-verb">You followed</span>
+                        <span className="act-subject act-user-link">@{activity.targetUsername}</span>
+                    </div>
+                    <span className="act-time">{ago}</span>
+                </div>
+                <div className="act-type-badge act-badge-follow">Following</div>
+            </div>
+        );
+    }
+
+    if (type === "new_follower") {
+        return (
+            <div
+                className="act-item act-new-follower"
+                onClick={() => navigate(`/profile/${activity.fromUsername}`)}
+            >
+                <div className="act-icon-wrap act-icon-follower">
+                    <ActivityAvatar
+                        username={activity.fromUsername}
+                        picture={activity.fromProfilePicture}
+                        API_URL={API_URL}
+                        size={36}
+                    />
+                </div>
+                <div className="act-body">
+                    <div className="act-main-line">
+                        <span className="act-subject act-user-link">@{activity.fromUsername}</span>
+                        <span className="act-verb">started following you</span>
+                    </div>
+                    <span className="act-time">{ago}</span>
+                </div>
+                <div className="act-type-badge act-badge-follower">New Follower</div>
+            </div>
+        );
+    }
+
+    if (type === "liked_review") {
+        return (
+            <div
+                className="act-item act-liked"
+                onClick={() => navigate(`/reviews/${activity.contentType}/${activity.contentId}`)}
+            >
+                <div className="act-icon-wrap act-icon-like">❤️</div>
+                <div className="act-body">
+                    <div className="act-main-line">
+                        <span className="act-verb">You liked</span>
+                        <span className="act-subject">@{activity.reviewAuthor}'s</span>
+                        <span className="act-verb">review of</span>
+                        <span className="act-subject">{activity.contentName}</span>
+                    </div>
+                    <span className="act-time">{ago}</span>
+                </div>
+                <div className="act-type-badge act-badge-like">Liked</div>
+            </div>
+        );
+    }
+
+    return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────
 export default function Profile() {
     const [user, setUser] = useState(null);
+    const [reviews, setReviews] = useState([]);
+    const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteConfirmation, setDeleteConfirmation] = useState("");
+    const [activeTab, setActiveTab] = useState("reviews");
+    const [activities, setActivities] = useState([]);
+    const [activityLoading, setActivityLoading] = useState(false);
+    const [favouriteAlbums, setFavouriteAlbums] = useState([]);
+    const [favouritesLoading, setFavouritesLoading] = useState(false);
 
     const [formData, setFormData] = useState({
         username: "",
@@ -23,39 +175,44 @@ export default function Profile() {
 
     const navigate = useNavigate();
 
-    // Placeholder stats data
-    const stats = {
-        followers: 1234,
-        following: 567,
-        albumsReviewed: 89,
-        favoriteAlbums: 45,
-        reviewRatings: {
-            fiveStar: 30,
-            fourStar: 25,
-            threeStar: 20,
-            twoStar: 10,
-            oneStar: 4
-        }
-    };
 
-    // Placeholder lists
-    const favoriteLists = {
-        albums: [
-            { id: 1, title: "Album Name 1", artist: "Artist Name", cover: null },
-            { id: 2, title: "Album Name 2", artist: "Artist Name", cover: null },
-            { id: 3, title: "Album Name 3", artist: "Artist Name", cover: null },
-            { id: 4, title: "Album Name 4", artist: "Artist Name", cover: null },
-        ],
-        reviewedAlbums: [
-            { id: 1, title: "Reviewed Album 1", artist: "Artist", rating: 5 },
-            { id: 2, title: "Reviewed Album 2", artist: "Artist", rating: 4 },
-            { id: 3, title: "Reviewed Album 3", artist: "Artist", rating: 3 },
-        ]
-    };
 
     useEffect(() => {
         fetchProfile();
+        fetchFavouriteAlbums();
     }, []);
+
+    const fetchFavouriteAlbums = async () => {
+        setFavouritesLoading(true);
+        try {
+            const res = await axios.get(`${API_URL}/api/favourites/me`, {
+                withCredentials: true
+            });
+            if (res.data.success) {
+                setFavouriteAlbums(res.data.favourites || []);
+            }
+        } catch (err) {
+            console.error("Failed to fetch favourite albums:", err);
+        } finally {
+            setFavouritesLoading(false);
+        }
+    };
+
+    const handleRemoveFavourite = async (albumId) => {
+        try {
+            const album = favouriteAlbums.find(a => a.albumId === albumId);
+            const res = await axios.post(`${API_URL}/api/favourites/toggle`, {
+                albumId,
+                albumName: album?.albumName || "Unknown",
+                artistName: album?.artistName || "Unknown"
+            }, { withCredentials: true });
+            if (res.data.success && !res.data.isFavourited) {
+                setFavouriteAlbums(prev => prev.filter(a => a.albumId !== albumId));
+            }
+        } catch (err) {
+            console.error("Failed to remove favourite:", err);
+        }
+    };
 
     const fetchProfile = async () => {
         try {
@@ -68,6 +225,16 @@ export default function Profile() {
                     username: res.data.user.username,
                     bio: res.data.user.bio || ""
                 });
+
+                // Fetch extended profile data (stats + reviews)
+                const profileRes = await axios.get(
+                    `${API_URL}/api/profile/user/${res.data.user.username}`,
+                    { withCredentials: true }
+                );
+                if (profileRes.data.success) {
+                    setReviews(profileRes.data.reviews || []);
+                    setStats(profileRes.data.stats || null);
+                }
             }
         } catch (err) {
             console.error("Failed to fetch profile:", err);
@@ -76,6 +243,23 @@ export default function Profile() {
             }
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchActivity = async () => {
+        if (activityLoading) return;
+        setActivityLoading(true);
+        try {
+            const res = await axios.get(`${API_URL}/api/profile/activity/feed`, {
+                withCredentials: true
+            });
+            if (res.data.success) {
+                setActivities(res.data.activities || []);
+            }
+        } catch (err) {
+            console.error("Failed to fetch activity:", err);
+        } finally {
+            setActivityLoading(false);
         }
     };
 
@@ -129,14 +313,14 @@ export default function Profile() {
             return;
         }
 
-        const formData = new FormData();
-        formData.append("profilePicture", file);
+        const uploadData = new FormData();
+        uploadData.append("profilePicture", file);
 
         setUploading(true);
         try {
             const res = await axios.post(
                 `${API_URL}/api/profile/upload-picture`,
-                formData,
+                uploadData,
                 {
                     withCredentials: true,
                     headers: { "Content-Type": "multipart/form-data" }
@@ -188,6 +372,23 @@ export default function Profile() {
         }
     };
 
+    const handleDeleteReview = async (reviewId) => {
+        if (!window.confirm("Are you sure you want to delete this review?")) return;
+
+        try {
+            const res = await axios.delete(`${API_URL}/api/reviews/${reviewId}`, {
+                withCredentials: true
+            });
+
+            if (res.data.success) {
+                fetchProfile();
+                alert("Review deleted successfully!");
+            }
+        } catch (err) {
+            alert(err.response?.data?.message || "Failed to delete review");
+        }
+    };
+
     const handleDeleteAccount = async () => {
         if (deleteConfirmation !== "DELETE") {
             alert("Please type DELETE to confirm");
@@ -195,7 +396,6 @@ export default function Profile() {
         }
 
         try {
-            // TODO: Add delete account endpoint
             await axios.delete(`${API_URL}/api/profile/delete-account`, {
                 withCredentials: true
             });
@@ -283,26 +483,36 @@ export default function Profile() {
                     </div>
 
                     {/* Stats Section */}
-                    <div className="stats-section">
-                        <div className="stats-grid">
-                            <div className="stat-card">
-                                <div className="stat-number">{stats.followers}</div>
-                                <div className="stat-label">Followers</div>
-                            </div>
-                            <div className="stat-card">
-                                <div className="stat-number">{stats.following}</div>
-                                <div className="stat-label">Following</div>
-                            </div>
-                            <div className="stat-card">
-                                <div className="stat-number">{stats.albumsReviewed}</div>
-                                <div className="stat-label">Albums Reviewed</div>
-                            </div>
-                            <div className="stat-card">
-                                <div className="stat-number">{stats.favoriteAlbums}</div>
-                                <div className="stat-label">Favorites</div>
+                    {stats && (
+                        <div className="stats-section">
+                            <div className="stats-grid">
+                                <div className="stat-card">
+                                    <div className="stat-number">{stats.followersCount ?? 0}</div>
+                                    <div className="stat-label">Followers</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-number">{stats.followingCount ?? 0}</div>
+                                    <div className="stat-label">Following</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-number">{stats.totalReviews}</div>
+                                    <div className="stat-label">Albums Reviewed</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-number">{stats.totalLikes}</div>
+                                    <div className="stat-label">Likes Received</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-number">{stats.avgRating}</div>
+                                    <div className="stat-label">Avg Rating</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-number">{favouriteAlbums.length}</div>
+                                    <div className="stat-label">Favorites</div>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Profile Details */}
                     <div className="profile-details">
@@ -368,66 +578,209 @@ export default function Profile() {
                         )}
                     </div>
 
-                    {/* Review Rating Distribution */}
-                    <div className="rating-distribution-section">
-                        <h3>Review Rating Distribution</h3>
-                        <div className="rating-bars">
-                            {[5, 4, 3, 2, 1].map((star) => {
-                                const key = `${['one', 'two', 'three', 'four', 'five'][star - 1]}Star`;
-                                const count = stats.reviewRatings[key];
-                                const percentage = (count / stats.albumsReviewed) * 100;
+                    {/* Reviews & Activity Tabs */}
+                    <div className="tabs-section">
+                        <div className="profile-tabs">
+                            <button
+                                className={`tab-btn ${activeTab === "reviews" ? "active" : ""}`}
+                                onClick={() => setActiveTab("reviews")}
+                            >
+                                My Reviews ({reviews.length})
+                            </button>
+                            <button
+                                className={`tab-btn ${activeTab === "activity" ? "active" : ""}`}
+                                onClick={() => {
+                                    setActiveTab("activity");
+                                    if (activities.length === 0) fetchActivity();
+                                }}
+                            >
+                                Activity
+                            </button>
+                        </div>
 
-                                return (
-                                    <div key={star} className="rating-bar-item">
-                                        <div className="rating-star-label">
-                                            {'★'.repeat(star)}
+                        <div className="tab-content">
+                            {activeTab === "reviews" && (
+                                <div className="reviews-tab">
+                                    {reviews.length === 0 ? (
+                                        <div className="no-content-state">
+                                            <div className="no-content-icon">📝</div>
+                                            <h3>No Reviews Yet</h3>
+                                            <p>You haven't written any reviews yet. Start reviewing!</p>
                                         </div>
-                                        <div className="rating-bar">
-                                            <div
-                                                className="rating-bar-fill"
-                                                style={{ width: `${percentage}%` }}
-                                            ></div>
+                                    ) : (
+                                        <div className="reviews-list-profile">
+                                            {reviews.map((review) => (
+                                                <div key={review._id} className="review-item"
+                                                    style={{ cursor: "pointer" }}
+                                                    onClick={() => navigate(`/reviews/${review.contentType || "album"}/${review.contentId}`, { state: { reviewId: review._id } })}
+                                                >
+                                                    <div className="review-item-header">
+                                                        <div className="review-album-info" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                                            {review.contentImage && (
+                                                                <img src={review.contentImage} alt={review.contentName}
+                                                                    style={{ width: 44, height: 44, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
+                                                            )}
+                                                            <div>
+                                                                <div className="review-album-title">{review.contentName}</div>
+                                                                <div style={{ fontSize: "0.78rem", color: "#888", textTransform: "capitalize" }}>{review.contentType || "album"}</div>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleDeleteReview(review._id); }}
+                                                            className="delete-review-btn"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </div>
+
+                                                    <div className="review-rating">
+                                                        {[...Array(5)].map((_, i) => (
+                                                            <span
+                                                                key={i}
+                                                                style={{ color: i < review.rating ? "#ffc107" : "#444" }}
+                                                            >
+                                                                ★
+                                                            </span>
+                                                        ))}
+                                                        <span style={{ fontSize: "0.8rem", color: "#888", marginLeft: 8 }}>{review.rating}/5</span>
+                                                    </div>
+
+                                                    <p className="review-text">
+                                                        {review.reviewText || "(No review text)"}
+                                                    </p>
+
+                                                    <div className="review-meta">
+                                                        <span className="review-date">
+                                                            {new Date(review.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                                                        </span>
+                                                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                                            <span className="review-likes">❤️ {review.likes || 0}</span>
+                                                            <span style={{ fontSize: "0.8rem", color: "#1db954", fontWeight: 600 }}>View replies →</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
-                                        <div className="rating-count">{count}</div>
-                                    </div>
-                                );
-                            })}
+                                    )}
+                                </div>
+                            )}
+
+                            {activeTab === "activity" && (
+                                <div className="activity-tab">
+                                    {activityLoading ? (
+                                        <div className="activity-loading">
+                                            <div className="activity-spinner" />
+                                            <span>Loading activity…</span>
+                                        </div>
+                                    ) : activities.length === 0 ? (
+                                        <div className="no-content-state">
+                                            <div className="no-content-icon">⚡</div>
+                                            <h3>No Activity Yet</h3>
+                                            <p>Your reviews, follows, and likes will show up here.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="activity-feed">
+                                            {activities.map((act, idx) => (
+                                                <ActivityItem
+                                                    key={idx}
+                                                    activity={act}
+                                                    navigate={navigate}
+                                                    API_URL={API_URL}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
+
+                    {/* Review Rating Distribution — from real reviews */}
+                    {reviews.length > 0 && (() => {
+                        const dist = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+                        reviews.forEach(r => { if (r.rating >= 1 && r.rating <= 5) dist[Math.round(r.rating)]++; });
+                        const maxD = Math.max(...Object.values(dist), 1);
+                        return (
+                            <div className="rating-distribution-section">
+                                <h3>Rating Distribution</h3>
+                                <div className="profile-rating-inner">
+                                    <div className="profile-avg-block">
+                                        <div className="profile-avg-number">{stats?.avgRating || 0}</div>
+                                        <div className="profile-avg-stars">
+                                            {[1, 2, 3, 4, 5].map(i => (
+                                                <span key={i} style={{ color: i <= Math.round(Number(stats?.avgRating || 0)) ? "#1db954" : "#333", fontSize: "1.2rem" }}>★</span>
+                                            ))}
+                                        </div>
+                                        <div className="profile-avg-label">{reviews.length} ratings</div>
+                                    </div>
+                                    <div className="profile-dist-bars">
+                                        {[5, 4, 3, 2, 1].map(star => (
+                                            <div key={star} className="rating-bar-item">
+                                                <span className="rating-star-label">{star} ★</span>
+                                                <div className="rating-bar">
+                                                    <div className="rating-bar-fill" style={{ width: `${(dist[star] / maxD) * 100}%` }} />
+                                                </div>
+                                                <span className="rating-count">{dist[star]}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
 
                     {/* Favorite Albums */}
                     <div className="list-section">
                         <h3>Favorite Albums</h3>
-                        <div className="albums-grid">
-                            {favoriteLists.albums.map((album) => (
-                                <div key={album.id} className="album-item">
-                                    <div className="album-cover-placeholder"></div>
-                                    <div className="album-info">
-                                        <div className="album-title">{album.title}</div>
-                                        <div className="album-artist">{album.artist}</div>
+                        {favouritesLoading ? (
+                            <div className="no-content-state">
+                                <p>Loading favourites...</p>
+                            </div>
+                        ) : favouriteAlbums.length === 0 ? (
+                            <div className="no-content-state">
+                                <div className="no-content-icon">💿</div>
+                                <h3>No Favourite Albums Yet</h3>
+                                <p>Visit album pages and click the ♡ Fav button to add albums here.</p>
+                            </div>
+                        ) : (
+                            <div className="albums-grid">
+                                {favouriteAlbums.map((album) => (
+                                    <div
+                                        key={album._id}
+                                        className="album-item fav-album-item"
+                                        onClick={() => navigate(`/album/${album.albumId}`)}
+                                    >
+                                        <div className="album-cover-wrap">
+                                            {album.coverImage ? (
+                                                <img
+                                                    src={album.coverImage}
+                                                    alt={album.albumName}
+                                                    className="album-cover-img"
+                                                />
+                                            ) : (
+                                                <div className="album-cover-placeholder">
+                                                    <span className="album-cover-icon">💿</span>
+                                                </div>
+                                            )}
+                                            <button
+                                                className="album-remove-btn"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleRemoveFavourite(album.albumId);
+                                                }}
+                                                title="Remove from favourites"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                        <div className="album-info">
+                                            <div className="album-title-fav">{album.albumName}</div>
+                                            <div className="album-artist-fav">{album.artistName}</div>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Reviewed Albums */}
-                    <div className="list-section">
-                        <h3>Recently Reviewed</h3>
-                        <div className="reviews-list-profile">
-                            {favoriteLists.reviewedAlbums.map((album) => (
-                                <div key={album.id} className="review-item">
-                                    <div className="review-album-cover"></div>
-                                    <div className="review-album-info">
-                                        <div className="review-album-title">{album.title}</div>
-                                        <div className="review-album-artist">{album.artist}</div>
-                                    </div>
-                                    <div className="review-rating">
-                                        {'★'.repeat(album.rating)}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Security Settings */}

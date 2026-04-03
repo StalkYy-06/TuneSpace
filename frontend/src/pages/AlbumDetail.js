@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import BottomBar from "../components/BottomBar";
+import ReviewModal from "../components/ReviewModal";
+import ReportModal from "../components/ReportModal";
 import "../styles/albumDetail.css";
+
 
 export default function AlbumDetail() {
     const { id } = useParams();
@@ -12,11 +15,20 @@ export default function AlbumDetail() {
     const [reviews, setReviews] = useState([]);
     const [moreAlbums, setMoreAlbums] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const [selectedReviewForReport, setSelectedReviewForReport] = useState(null);
+    const [averageRating, setAverageRating] = useState(0);
+    const [userReview, setUserReview] = useState(null);
+    const [userId, setUserId] = useState(null);
+    const [likedReviews, setLikedReviews] = useState({});
+    const [replyCounts, setReplyCounts] = useState({});
+    const [showLoginModal, setShowLoginModal] = useState(false);
 
-    const [albumStats] = useState({
+    const [albumStats, setAlbumStats] = useState({
         listenedCount: 1247,
         inListCount: 856,
-        favouritedCount: 392,
+        favouritedCount: 0,
     });
 
     const [userInteraction, setUserInteraction] = useState({
@@ -34,9 +46,6 @@ export default function AlbumDetail() {
             release_date: "2024-01-15",
             total_tracks: 12,
             album_type: "album",
-            averageRating: 4.5,
-            totalRatings: 1250,
-            ratingDistribution: { 5: 850, 4: 250, 3: 100, 2: 30, 1: 20 },
             tracks: [
                 { id: "t1", track_number: 1, name: "Starlight Boulevard", duration_ms: 245000, explicit: false },
                 { id: "t2", track_number: 2, name: "Digital Dreams", duration_ms: 198000, explicit: false },
@@ -50,11 +59,6 @@ export default function AlbumDetail() {
                 { id: "t10", track_number: 10, name: "Aurora", duration_ms: 318000, explicit: false },
                 { id: "t11", track_number: 11, name: "Cosmic Highway", duration_ms: 301000, explicit: false },
                 { id: "t12", track_number: 12, name: "Dream Sequence", duration_ms: 345000, explicit: false }
-            ],
-            reviews: [
-                { id: 1, username: "MusicLover92", rating: 5, content: "Absolutely stunning album! Every track is a masterpiece. The production quality is top-notch and the songwriting is incredible.", date: "2024-02-01", likes: 45 },
-                { id: 2, username: "SynthFan", rating: 4, content: "Great synthwave vibes. Some tracks could be shorter but overall a solid album.", date: "2024-01-28", likes: 32 },
-                { id: 3, username: "NightListener", rating: 5, content: "Perfect for late night drives. The atmosphere is amazing!", date: "2024-01-25", likes: 28 },
             ],
             moreAlbums: [
                 {
@@ -90,6 +94,9 @@ export default function AlbumDetail() {
     };
 
     useEffect(() => {
+        checkAuth();
+        fetchFavouriteCount();
+
         setTimeout(() => {
             const albumData = albumsData[id] || {
                 id,
@@ -99,20 +106,174 @@ export default function AlbumDetail() {
                 release_date: "2024-01-01",
                 total_tracks: 10,
                 album_type: "album",
-                averageRating: 0,
-                totalRatings: 0,
-                ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
                 tracks: [],
-                reviews: [],
                 moreAlbums: []
             };
             setAlbum(albumData);
             setTracks(albumData.tracks || []);
-            setReviews(albumData.reviews || []);
             setMoreAlbums(albumData.moreAlbums || []);
             setLoading(false);
         }, 300);
+
+        fetchReviews();
     }, [id]);
+
+    const checkAuth = async () => {
+        try {
+            const response = await fetch("http://localhost:5000/api/auth/me", {
+                credentials: "include"
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.user) {
+                    setUserId(data.user._id);
+                    checkFavouriteStatus(data.user._id);
+                }
+            }
+        } catch (err) {
+            console.error("Error checking auth:", err);
+        }
+    };
+
+    const fetchFavouriteCount = async () => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/favourites/count/${id}`);
+            const data = await response.json();
+            if (data.success) {
+                setAlbumStats(prev => ({ ...prev, favouritedCount: data.count }));
+            }
+        } catch (err) {
+            console.error("Error fetching favourite count:", err);
+        }
+    };
+
+    const checkFavouriteStatus = async (uid) => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/favourites/check/${id}`, {
+                credentials: "include"
+            });
+            const data = await response.json();
+            if (data.success) {
+                setUserInteraction(prev => ({ ...prev, hasFavourited: data.isFavourited }));
+            }
+        } catch (err) {
+            console.error("Error checking favourite status:", err);
+        }
+    };
+
+    const fetchReviews = async () => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/reviews/album/${id}`);
+            const data = await response.json();
+            if (data.success) {
+                setReviews(data.reviews);
+                setAverageRating(data.averageRating);
+
+                const liked = {};
+                data.reviews.forEach(review => {
+                    if (userId && review.likedBy && review.likedBy.includes(userId)) {
+                        liked[review._id] = true;
+                    }
+                });
+                setLikedReviews(liked);
+            }
+
+            try {
+                const userReviewResponse = await fetch(`http://localhost:5000/api/reviews/album/${id}/user`, {
+                    credentials: "include"
+                });
+                const userData = await userReviewResponse.json();
+                if (userData.success && userData.review) {
+                    setUserReview(userData.review);
+                }
+            } catch (err) {
+                // User not logged in, ignore
+            }
+        } catch (err) {
+            console.error("Error fetching reviews:", err);
+        }
+    };
+
+    const fetchReplyCount = async (reviewId) => {
+        try {
+            const response = await fetch(
+                `http://localhost:5000/api/replies/review/${reviewId}/count`,
+                { credentials: "include" }
+            );
+            const data = await response.json();
+            if (data.success) {
+                setReplyCounts(prev => ({ ...prev, [reviewId]: data.count }));
+            }
+        } catch (err) {
+            console.error("Error fetching reply count:", err);
+        }
+    };
+
+    useEffect(() => {
+        if (reviews.length > 0) {
+            reviews.forEach(review => {
+                fetchReplyCount(review._id);
+            });
+        }
+    }, [reviews]);
+
+    // Compute rating distribution from real reviews
+    const getRatingDistribution = () => {
+        const dist = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+        reviews.forEach(r => {
+            if (r.rating >= 1 && r.rating <= 5) dist[Math.round(r.rating)]++;
+        });
+        return dist;
+    };
+
+    const handleReviewSubmit = async (newReview) => {
+        setUserReview(newReview);
+        await fetchReviews();
+    };
+
+    const handleLikeReview = async (reviewId) => {
+        if (!userId) {
+            setShowLoginModal(true);
+            return;
+        }
+        try {
+            const response = await fetch(`http://localhost:5000/api/reviews/${reviewId}/like`, {
+                method: "POST",
+                credentials: "include"
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setReviews(prevReviews =>
+                    prevReviews.map(review =>
+                        review._id === reviewId
+                            ? { ...review, likes: data.likes }
+                            : review
+                    )
+                );
+                setLikedReviews(prev => ({
+                    ...prev,
+                    [reviewId]: data.isLiked
+                }));
+            } else if (response.status === 401) {
+                setShowLoginModal(true);
+            }
+        } catch (err) {
+            console.error("Error liking review:", err);
+        }
+    };
+
+    const handleReportReview = (review) => {
+        setSelectedReviewForReport(review);
+        setIsReportModalOpen(true);
+    };
+
+    const handleReportSubmit = async () => {
+        await fetchReviews();
+        setIsReportModalOpen(false);
+        setSelectedReviewForReport(null);
+    };
 
     const formatDuration = (ms) => {
         const totalSeconds = Math.floor(ms / 1000);
@@ -138,19 +299,40 @@ export default function AlbumDetail() {
         setUserInteraction(prev => ({ ...prev, inListenList: !prev.inListenList }));
     };
 
-    const toggleFavourite = () => {
-        setUserInteraction(prev => ({ ...prev, hasFavourited: !prev.hasFavourited }));
+    const toggleFavourite = async () => {
+        if (!userId) {
+            setShowLoginModal(true);
+            return;
+        }
+        try {
+            const response = await fetch("http://localhost:5000/api/favourites/toggle", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    albumId: id,
+                    albumName: album?.name || "Unknown Album",
+                    artistName: album?.artists?.map(a => a.name).join(", ") || "Unknown Artist",
+                    coverImage: album?.images?.[0]?.url || null
+                })
+            });
+            const data = await response.json();
+            if (data.success) {
+                setUserInteraction(prev => ({ ...prev, hasFavourited: data.isFavourited }));
+                setAlbumStats(prev => ({ ...prev, favouritedCount: data.favouriteCount }));
+            } else if (response.status === 401) {
+                setShowLoginModal(true);
+            }
+        } catch (err) {
+            console.error("Error toggling favourite:", err);
+        }
     };
 
-    if (loading) {
-        return (
-            <div className="album-detail-wrapper">
-                <Navbar />
-                <div className="album-loading">Loading album...</div>
-                <BottomBar />
-            </div>
-        );
-    }
+    const renderStars = (rating) => {
+        return [1, 2, 3, 4, 5].map(i => (
+            <span key={i} className={i <= rating ? "star filled" : "star"}>★</span>
+        ));
+    };
 
     if (!album) {
         return (
@@ -161,6 +343,9 @@ export default function AlbumDetail() {
             </div>
         );
     }
+
+    const ratingDist = getRatingDistribution();
+    const maxDistCount = Math.max(...Object.values(ratingDist), 1);
 
     return (
         <div className="album-detail-wrapper">
@@ -175,83 +360,83 @@ export default function AlbumDetail() {
                     </div>
 
                     <div className="album-info-container">
-                        <div className="album-title-section">
-                            <h1 className="album-title">{album.name}</h1>
-                            <div className="album-artist-names">
-                                {album.artists?.map((artist, idx) => (
-                                    <React.Fragment key={artist.id || idx}>
-                                        <span
-                                            className="artist-name-link"
-                                            onClick={() => artist.id && handleArtistClick(artist.id)}
-                                        >
-                                            {artist.name}
-                                        </span>
-                                        {idx < album.artists.length - 1 && ", "}
-                                    </React.Fragment>
+                        <div className="album-type-badge">{album.album_type || "Album"}</div>
+                        <h1 className="album-title">{album.name}</h1>
+
+                        <div className="album-meta">
+                            {album.artists?.map((artist, index) => (
+                                <React.Fragment key={artist.id || index}>
+                                    <span
+                                        className="artist-link"
+                                        onClick={() => handleArtistClick(artist.id)}
+                                    >
+                                        {artist.name}
+                                    </span>
+                                    {index < album.artists.length - 1 && <span>, </span>}
+                                </React.Fragment>
+                            ))}
+                            <span className="separator">•</span>
+                            <span>{new Date(album.release_date).getFullYear()}</span>
+                            <span className="separator">•</span>
+                            <span>{album.total_tracks} tracks</span>
+                        </div>
+
+                        <div className="album-stats-row">
+                            <div className="stat-item">
+                                <span className="stat-icon">👂</span>
+                                <span className="stat-text">{albumStats.listenedCount.toLocaleString()} listened</span>
+                            </div>
+                            <div className="stat-item">
+                                <span className="stat-icon">📝</span>
+                                <span className="stat-text">{albumStats.inListCount.toLocaleString()} lists</span>
+                            </div>
+                            <div className="stat-item">
+                                <span className="stat-icon">❤️</span>
+                                <span className="stat-text">{albumStats.favouritedCount.toLocaleString()} favourites</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Enhanced Rating Stats Section */}
+                {reviews.length > 0 && (
+                    <div className="rating-stats-section">
+                        <div className="rating-block">
+                            <div className="rating-big-number">
+                                {Number(averageRating).toFixed(1)}
+                            </div>
+                            <div className="rating-stars-display">
+                                {[1, 2, 3, 4, 5].map(i => (
+                                    <span
+                                        key={i}
+                                        className="rating-star"
+                                        style={{
+                                            color: i <= Math.round(averageRating) ? "#1db954" : "#333",
+                                            opacity: i <= averageRating ? 1 : (i - averageRating < 1 ? (averageRating % 1) : 0.2)
+                                        }}
+                                    >★</span>
                                 ))}
                             </div>
-                            <div className="album-metadata">
-                                {album.album_type && <span className="metadata-item">{album.album_type}</span>}
-                                {album.release_date && (
-                                    <>
-                                        <span className="metadata-separator"> • </span>
-                                        <span className="metadata-item">{new Date(album.release_date).getFullYear()}</span>
-                                    </>
-                                )}
-                                {album.total_tracks && (
-                                    <>
-                                        <span className="metadata-separator"> • </span>
-                                        <span className="metadata-item">{album.total_tracks} tracks</span>
-                                    </>
-                                )}
-                            </div>
+                            <div className="rating-total-count">{reviews.length} {reviews.length === 1 ? "rating" : "ratings"}</div>
                         </div>
 
-                        <div className="album-global-stats">
-                            <div className="stat-item">
-
-                                <span className="stat-number">{albumStats.listenedCount}</span>
-                                <span className="stat-label">Listened</span>
-                            </div>
-                            <div className="stat-item">
-
-                                <span className="stat-number">{albumStats.inListCount}</span>
-                                <span className="stat-label">In List</span>
-                            </div>
-                            <div className="stat-item">
-
-                                <span className="stat-number">{albumStats.favouritedCount}</span>
-                                <span className="stat-label">Favourited</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="rating-stats-section">
-                    <div className="rating-summary">
-                        <div className="average-rating">
-                            <div className="rating-number">{album.averageRating}</div>
-                            <div className="rating-stars">{'★'.repeat(Math.floor(album.averageRating))}</div>
-                            <div className="rating-count">{album.totalRatings} ratings</div>
-                        </div>
-                    </div>
-
-                    <div className="rating-distribution">
-                        {[5, 4, 3, 2, 1].map(star => {
-                            const count = album.ratingDistribution[star] || 0;
-                            const pct = album.totalRatings > 0 ? (count / album.totalRatings) * 100 : 0;
-                            return (
-                                <div key={star} className="rating-bar-row">
-                                    <span className="star-label">{star} ★</span>
-                                    <div className="rating-bar">
-                                        <div className="rating-bar-fill" style={{ width: `${pct}%` }}></div>
+                        <div className="rating-distribution">
+                            {[5, 4, 3, 2, 1].map(star => (
+                                <div key={star} className="dist-row">
+                                    <span className="dist-label">{star}</span>
+                                    <span className="dist-star">★</span>
+                                    <div className="dist-bar-track">
+                                        <div
+                                            className="dist-bar-fill"
+                                            style={{ width: `${(ratingDist[star] / maxDistCount) * 100}%` }}
+                                        />
                                     </div>
-                                    <span className="rating-bar-count">{count}</span>
+                                    <span className="dist-count">{ratingDist[star]}</span>
                                 </div>
-                            );
-                        })}
+                            ))}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 <div className="album-interaction-box">
                     <div className="interaction-row">
@@ -261,7 +446,7 @@ export default function AlbumDetail() {
                                     <span key={star} className="star-btn">★</span>
                                 ))}
                             </div>
-                            <button className="review-btn">Review</button>
+                            <button className="review-btn" onClick={() => setIsReviewModalOpen(true)}>Review</button>
                         </div>
                         <div className="interaction-right">
                             <div className="action-list">
@@ -297,8 +482,6 @@ export default function AlbumDetail() {
                     </div>
                 </div>
 
-
-
                 {tracks.length > 0 && (
                     <div className="tracklist-section">
                         <h2>Tracklist</h2>
@@ -319,43 +502,161 @@ export default function AlbumDetail() {
                     </div>
                 )}
 
-                <div className="reviews-section">
-                    <div className="section-header">
-                        <h2>Popular Reviews</h2>
-                        <button className="view-all-btn" onClick={() => navigate(`/album/${id}/reviews`)}>
-                            View All Reviews
-                        </button>
+                <section className="reviews-section">
+                    <div className="reviews-header">
+                        <h2>Reviews ({reviews.length})</h2>
+                        <div className="reviews-header-right">
+                            {!userReview && userId && (
+                                <button className="add-review-btn" onClick={() => setIsReviewModalOpen(true)}>
+                                    + Write Review
+                                </button>
+                            )}
+                            {reviews.length > 0 && (
+                                <Link
+                                    to={`/reviews/album/${id}`}
+                                    className="view-all-btn"
+                                >
+                                    View All →
+                                </Link>
+                            )}
+                        </div>
                     </div>
 
-                    {reviews.length > 0 ? (
-                        <div className="reviews-grid">
-                            {reviews.slice(0, 3).map(review => (
-                                <div key={review.id} className="review-card">
-                                    <div className="review-card-header">
-                                        <div className="reviewer-avatar">
-                                            {review.username.charAt(0).toUpperCase()}
+                    <div className="reviews-container">
+                        {reviews.length === 0 ? (
+                            <div className="no-reviews">
+                                <p>No reviews yet. Be the first to review!</p>
+                            </div>
+                        ) : (
+                            reviews.slice(0, 5).map((review) => (
+                                <div
+                                    key={review._id}
+                                    className="review-card"
+                                    onClick={() => navigate(`/reviews/album/${id}`, { state: { reviewId: review._id } })}
+                                    style={{ cursor: "pointer" }}
+                                >
+                                    <div className="review-header-section">
+                                        <div className="review-avatar">
+                                            {review.username?.charAt(0).toUpperCase()}
                                         </div>
-                                        <div className="reviewer-info">
-                                            <div className="reviewer-name">{review.username}</div>
-                                            <div className="review-rating-stars">
-                                                {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+                                        <div className="review-user-details">
+                                            <div
+                                                className="review-username"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate(`/profile/${review.username}`);
+                                                }}
+                                            >
+                                                {review.username}
+                                            </div>
+                                            <div className="review-rating">
+                                                {[...Array(5)].map((_, i) => (
+                                                    <span key={i} className={i < review.rating ? "star filled" : "star"}>
+                                                        ★
+                                                    </span>
+                                                ))}
+                                                <span className="rating-num">{review.rating}/5</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <p className="review-text">{review.content}</p>
+
+                                    <div className="review-content">
+                                        {review.reviewText || "(No review text)"}
+                                    </div>
+
                                     <div className="review-footer">
-                                        <span className="review-date">{new Date(review.date).toLocaleDateString()}</span>
-                                        <span className="review-likes">👍 {review.likes}</span>
+                                        <div className="review-meta-info">
+                                            <span className="review-date">
+                                                {new Date(review.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                                            </span>
+                                            {replyCounts[review._id] > 0 && (
+                                                <span className="review-replies-link">
+                                                    💬 {replyCounts[review._id]} {replyCounts[review._id] === 1 ? "reply" : "replies"}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <div className="review-actions" onClick={e => e.stopPropagation()}>
+                                            <button
+                                                className={`review-action-btn ${likedReviews[review._id] ? "liked" : ""}`}
+                                                onClick={() => handleLikeReview(review._id)}
+                                            >
+                                                <span className="action-icon">❤️</span>
+                                                <span className="action-count">{review.likes || 0}</span>
+                                            </button>
+                                            <button
+                                                className="review-action-btn"
+                                                onClick={() => handleReportReview(review)}
+                                            >
+                                                <span className="action-icon">🚩</span>
+                                                <span className="action-text">Report</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="no-reviews-message">
-                            No reviews yet. Be the first to review this album!
+                            ))
+                        )}
+                    </div>
+
+                    {reviews.length > 5 && (
+                        <div className="more-reviews-notice">
+                            <Link to={`/reviews/album/${id}`} className="see-more-btn">
+                                See all {reviews.length} reviews →
+                            </Link>
                         </div>
                     )}
-                </div>
+                </section>
+
+                <ReviewModal
+                    isOpen={isReviewModalOpen}
+                    onClose={() => setIsReviewModalOpen(false)}
+                    contentType="album"
+                    contentId={id}
+                    contentName={album?.name}
+                    contentImage={album?.images?.[0]?.url}
+                    onReviewSubmit={handleReviewSubmit}
+                    existingReview={userReview}
+                />
+
+                <ReportModal
+                    isOpen={isReportModalOpen}
+                    onClose={() => {
+                        setIsReportModalOpen(false);
+                        setSelectedReviewForReport(null);
+                    }}
+                    review={selectedReviewForReport}
+                    onReportSubmit={handleReportSubmit}
+                />
+
+                {showLoginModal && (
+                    <div
+                        className="ar-login-overlay"
+                        onClick={() => setShowLoginModal(false)}
+                    >
+                        <div
+                            className="ar-login-modal"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <button
+                                className="ar-login-close"
+                                onClick={() => setShowLoginModal(false)}
+                            >
+                                ×
+                            </button>
+                            <div className="ar-login-icon">🔒</div>
+                            <h3>Sign in required</h3>
+                            <p>You need to be logged in to favourite albums. Join the community!</p>
+                            <a href="/login" className="ar-login-btn">Go to Login</a>
+                            <button
+                                className="ar-login-cancel"
+                                onClick={() => setShowLoginModal(false)}
+                            >
+                                Maybe later
+                            </button>
+                        </div>
+                    </div>
+                )}
+
 
                 {moreAlbums.length > 0 && (
                     <div className="more-albums-section">
