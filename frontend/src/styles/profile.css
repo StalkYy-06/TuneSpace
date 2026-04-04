@@ -1431,3 +1431,66 @@
     font-size: 0.85rem;
   }
 }
+
+/* ─── Favourited & Listened album activity items ── */
+
+/* Shared album thumbnail inside the icon wrap */
+.act-album-thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  object-fit: cover;
+  display: block;
+}
+
+/* Sub-line: "by Artist Name" */
+.act-sub-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82rem;
+  margin-top: 2px;
+}
+
+.act-subject-dim {
+  color: #888;
+  font-weight: 500;
+}
+
+/* ── Favourited ── */
+.act-icon-fav {
+  background: rgba(255, 105, 180, 0.12);
+  border: 2px solid rgba(255, 105, 180, 0.25);
+  font-size: 20px;
+  padding: 3px;
+  overflow: hidden;
+}
+
+.act-favourited:hover {
+  background: rgba(255, 105, 180, 0.04);
+}
+
+.act-badge-fav {
+  background: rgba(255, 105, 180, 0.12);
+  color: #ff69b4;
+  border: 1px solid rgba(255, 105, 180, 0.25);
+}
+
+/* ── Listened ── */
+.act-icon-listened {
+  background: rgba(243, 156, 18, 0.12);
+  border: 2px solid rgba(243, 156, 18, 0.25);
+  font-size: 20px;
+  padding: 3px;
+  overflow: hidden;
+}
+
+.act-listened:hover {
+  background: rgba(243, 156, 18, 0.04);
+}
+
+.act-badge-listened {
+  background: rgba(243, 156, 18, 0.12);
+  color: #f39c12;
+  border: 1px solid rgba(243, 156, 18, 0.25);
+}

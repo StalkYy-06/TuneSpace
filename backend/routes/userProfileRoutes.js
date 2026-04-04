@@ -2,6 +2,8 @@ import express from "express";
 import User from "../models/User.js";
 import Review from "../models/Review.js";
 import UserFollow from "../models/UserFollow.js";
+import FavouriteAlbum from "../models/FavouriteAlbum.js";
+import ListenedAlbum from "../models/ListenedAlbum.js";
 import jwt from "jsonwebtoken";
 
 const router = express.Router();
@@ -40,24 +42,20 @@ router.get("/user/:username", optionalAuth, async (req, res) => {
     try {
         const { username } = req.params;
 
-        // Find user
         const user = await User.findOne({ username }).select("-password");
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });
         }
 
-        // Get user's reviews
         const reviews = await Review.find({ userId: user._id })
             .sort({ createdAt: -1 })
             .limit(20);
 
-        // Get follower and following counts
         const [followersCount, followingCount] = await Promise.all([
             UserFollow.countDocuments({ followingId: user._id }),
             UserFollow.countDocuments({ followerId: user._id })
         ]);
 
-        // Check if current user is following this user
         let isFollowing = false;
         if (req.userId) {
             const followRecord = await UserFollow.findOne({
@@ -67,7 +65,6 @@ router.get("/user/:username", optionalAuth, async (req, res) => {
             isFollowing = !!followRecord;
         }
 
-        // Calculate review stats
         const totalReviews = reviews.length;
         const avgRating = reviews.length > 0
             ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
@@ -106,49 +103,30 @@ router.post("/follow/:userId", requireAuth, async (req, res) => {
     try {
         const targetUserId = req.params.userId;
 
-        // Can't follow yourself
         if (targetUserId === req.userId) {
-            return res.status(400).json({
-                success: false,
-                message: "You cannot follow yourself"
-            });
+            return res.status(400).json({ success: false, message: "You cannot follow yourself" });
         }
 
-        // Check if target user exists
         const targetUser = await User.findById(targetUserId);
         if (!targetUser) {
             return res.status(404).json({ success: false, message: "User not found" });
         }
 
-        // Check if already following
         const existingFollow = await UserFollow.findOne({
             followerId: req.userId,
             followingId: targetUserId
         });
 
         if (existingFollow) {
-            return res.status(400).json({
-                success: false,
-                message: "Already following this user"
-            });
+            return res.status(400).json({ success: false, message: "Already following this user" });
         }
 
-        // Create follow record
-        const follow = new UserFollow({
-            followerId: req.userId,
-            followingId: targetUserId
-        });
-
+        const follow = new UserFollow({ followerId: req.userId, followingId: targetUserId });
         await follow.save();
 
-        // Get updated counts
         const followersCount = await UserFollow.countDocuments({ followingId: targetUserId });
 
-        res.json({
-            success: true,
-            message: "User followed successfully",
-            followersCount
-        });
+        res.json({ success: true, message: "User followed successfully", followersCount });
     } catch (err) {
         console.error("Error following user:", err);
         res.status(500).json({ success: false, message: "Error following user" });
@@ -166,20 +144,12 @@ router.post("/unfollow/:userId", requireAuth, async (req, res) => {
         });
 
         if (!result) {
-            return res.status(404).json({
-                success: false,
-                message: "Not following this user"
-            });
+            return res.status(404).json({ success: false, message: "Not following this user" });
         }
 
-        // Get updated counts
         const followersCount = await UserFollow.countDocuments({ followingId: targetUserId });
 
-        res.json({
-            success: true,
-            message: "User unfollowed successfully",
-            followersCount
-        });
+        res.json({ success: true, message: "User unfollowed successfully", followersCount });
     } catch (err) {
         console.error("Error unfollowing user:", err);
         res.status(500).json({ success: false, message: "Error unfollowing user" });
@@ -190,17 +160,12 @@ router.post("/unfollow/:userId", requireAuth, async (req, res) => {
 router.get("/user/:userId/followers", async (req, res) => {
     try {
         const follows = await UserFollow.find({ followingId: req.params.userId })
-            .populate('followerId', 'username profilePicture bio')
+            .populate("followerId", "username profilePicture bio")
             .sort({ createdAt: -1 })
             .limit(50);
 
         const followers = follows.map(f => f.followerId);
-
-        res.json({
-            success: true,
-            followers,
-            count: followers.length
-        });
+        res.json({ success: true, followers, count: followers.length });
     } catch (err) {
         console.error("Error fetching followers:", err);
         res.status(500).json({ success: false, message: "Error fetching followers" });
@@ -211,17 +176,12 @@ router.get("/user/:userId/followers", async (req, res) => {
 router.get("/user/:userId/following", async (req, res) => {
     try {
         const follows = await UserFollow.find({ followerId: req.params.userId })
-            .populate('followingId', 'username profilePicture bio')
+            .populate("followingId", "username profilePicture bio")
             .sort({ createdAt: -1 })
             .limit(50);
 
         const following = follows.map(f => f.followingId);
-
-        res.json({
-            success: true,
-            following,
-            count: following.length
-        });
+        res.json({ success: true, following, count: following.length });
     } catch (err) {
         console.error("Error fetching following:", err);
         res.status(500).json({ success: false, message: "Error fetching following" });
@@ -233,7 +193,6 @@ router.get("/activity/feed", requireAuth, async (req, res) => {
     try {
         const userId = req.userId;
 
-        // Find the current user
         const currentUser = await User.findById(userId).select("username");
         if (!currentUser) {
             return res.status(404).json({ success: false, message: "User not found" });
@@ -295,7 +254,7 @@ router.get("/activity/feed", requireAuth, async (req, res) => {
             }
         });
 
-        // 4. Reviews liked by this user (reviews where likedBy contains userId)
+        // 4. Reviews liked by this user
         const likedReviews = await Review.find({ likedBy: userId })
             .sort({ updatedAt: -1 })
             .limit(20)
@@ -309,6 +268,40 @@ router.get("/activity/feed", requireAuth, async (req, res) => {
                 contentId: r.contentId,
                 reviewAuthor: r.username,
                 timestamp: r.updatedAt || r.createdAt
+            });
+        });
+
+        // 5. Albums favourited by this user
+        const favouritedAlbums = await FavouriteAlbum.find({ userId })
+            .sort({ createdAt: -1 })
+            .limit(20)
+            .select("albumId albumName artistName coverImage createdAt");
+
+        favouritedAlbums.forEach(a => {
+            activities.push({
+                type: "favourited_album",
+                albumId: a.albumId,
+                albumName: a.albumName,
+                artistName: a.artistName,
+                coverImage: a.coverImage,
+                timestamp: a.createdAt
+            });
+        });
+
+        // 6. Albums listened to by this user
+        const listenedAlbums = await ListenedAlbum.find({ userId })
+            .sort({ createdAt: -1 })
+            .limit(20)
+            .select("albumId albumName artistName coverImage createdAt");
+
+        listenedAlbums.forEach(a => {
+            activities.push({
+                type: "listened_album",
+                albumId: a.albumId,
+                albumName: a.albumName,
+                artistName: a.artistName,
+                coverImage: a.coverImage,
+                timestamp: a.createdAt
             });
         });
 

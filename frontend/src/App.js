@@ -10,16 +10,18 @@ import About from "./pages/About";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Contact from "./pages/Contact";
-import AdminLogin from './pages/AdminLogin';
-import AdminDashboard from './pages/AdminDashboard';
-import AllReviews from './pages/AllReviews';
-import UserProfile from './pages/UserProfile';
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
+import AllReviews from "./pages/AllReviews";
+import UserProfile from "./pages/UserProfile";
+import Leaderboard from "./pages/Leaderboard";
+import Search from "./pages/Search";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path='/' element={<Home />} />
+        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -34,6 +36,8 @@ function App() {
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/profile/:username" element={<UserProfile />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
+        <Route path="/search" element={<Search />} />
       </Routes>
     </BrowserRouter>
   );
