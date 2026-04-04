@@ -1,4 +1,3 @@
-// src/pages/Home.js
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -6,295 +5,184 @@ import "../styles/home.css";
 import Navbar from "../components/Navbar";
 import BottomBar from "../components/BottomBar";
 
+const API = "http://localhost:5000";
+
 export default function Home() {
     const [user, setUser] = useState(null);
+    const [trendingAlbums, setTrendingAlbums] = useState([]);
+    const [popularArtists, setPopularArtists] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
-    // Placeholder data
-    const newReleases = [
-        {
-            id: "album1",
-            name: "Midnight Echoes",
-            artists: [{ id: "artist1", name: "The Neon Waves" }],
-            images: [{ url: "https://via.placeholder.com/300x300/1db954/ffffff?text=Midnight+Echoes" }],
-            release_date: "2024-01-15"
-        },
-        {
-            id: "album2",
-            name: "Cosmic Journey",
-            artists: [{ id: "artist2", name: "Luna Sky" }],
-            images: [{ url: "https://via.placeholder.com/300x300/e91e63/ffffff?text=Cosmic+Journey" }],
-            release_date: "2024-02-20"
-        },
-        {
-            id: "album3",
-            name: "Urban Symphony",
-            artists: [{ id: "artist3", name: "Metro Pulse" }],
-            images: [{ url: "https://via.placeholder.com/300x300/9c27b0/ffffff?text=Urban+Symphony" }],
-            release_date: "2023-11-05"
-        },
-        {
-            id: "album4",
-            name: "Ocean Waves",
-            artists: [{ id: "artist4", name: "Coastal Breeze" }],
-            images: [{ url: "https://via.placeholder.com/300x300/00bcd4/ffffff?text=Ocean+Waves" }],
-            release_date: "2024-03-10"
-        },
-        {
-            id: "album5",
-            name: "Golden Hour",
-            artists: [{ id: "artist5", name: "Sunset Collective" }],
-            images: [{ url: "https://via.placeholder.com/300x300/ff9800/ffffff?text=Golden+Hour" }],
-            release_date: "2023-09-18"
-        },
-        {
-            id: "album6",
-            name: "Velvet Dreams",
-            artists: [{ id: "artist6", name: "Silk Road" }],
-            images: [{ url: "https://via.placeholder.com/300x300/673ab7/ffffff?text=Velvet+Dreams" }],
-            release_date: "2024-01-22"
-        },
-        {
-            id: "album7",
-            name: "Thunder & Lightning",
-            artists: [{ id: "artist7", name: "Storm Chasers" }],
-            images: [{ url: "https://via.placeholder.com/300x300/f44336/ffffff?text=Thunder" }],
-            release_date: "2023-12-01"
-        },
-        {
-            id: "album8",
-            name: "Serenity",
-            artists: [{ id: "artist1", name: "The Neon Waves" }],
-            images: [{ url: "https://via.placeholder.com/300x300/4caf50/ffffff?text=Serenity" }],
-            release_date: "2024-02-14"
-        }
-    ];
-
-    const featuredAlbums = [
-        {
-            id: "album9",
-            name: "Crystal Nights",
-            artists: [{ id: "artist9", name: "Starlight Band" }],
-            images: [{ url: "https://via.placeholder.com/300x300/2196f3/ffffff?text=Crystal+Nights" }]
-        },
-        {
-            id: "album10",
-            name: "Electric Paradise",
-            artists: [{ id: "artist10", name: "Voltage" }],
-            images: [{ url: "https://via.placeholder.com/300x300/ff5722/ffffff?text=Electric+Paradise" }]
-        },
-        {
-            id: "album11",
-            name: "Whispers in the Wind",
-            artists: [{ id: "artist11", name: "Echo Valley" }],
-            images: [{ url: "https://via.placeholder.com/300x300/795548/ffffff?text=Whispers" }]
-        },
-        {
-            id: "album12",
-            name: "Neon Dreams",
-            artists: [{ id: "artist12", name: "Cyber City" }],
-            images: [{ url: "https://via.placeholder.com/300x300/ff4081/ffffff?text=Neon+Dreams" }]
-        },
-        {
-            id: "album13",
-            name: "Autumn Leaves",
-            artists: [{ id: "artist13", name: "Maple Grove" }],
-            images: [{ url: "https://via.placeholder.com/300x300/ff6f00/ffffff?text=Autumn+Leaves" }]
-        },
-        {
-            id: "album14",
-            name: "Midnight Jazz",
-            artists: [{ id: "artist14", name: "Blue Note Trio" }],
-            images: [{ url: "https://via.placeholder.com/300x300/3f51b5/ffffff?text=Midnight+Jazz" }]
-        },
-        {
-            id: "album15",
-            name: "Summer Vibes",
-            artists: [{ id: "artist15", name: "Beach Boys Revival" }],
-            images: [{ url: "https://via.placeholder.com/300x300/ffc107/ffffff?text=Summer+Vibes" }]
-        },
-        {
-            id: "album16",
-            name: "Deep Space",
-            artists: [{ id: "artist16", name: "Cosmic Explorers" }],
-            images: [{ url: "https://via.placeholder.com/300x300/7c4dff/ffffff?text=Deep+Space" }]
-        }
-    ];
-
-    const trendingArtists = [
-        {
-            id: "artist1",
-            name: "The Neon Waves",
-            images: [{ url: "https://via.placeholder.com/300x300/1db954/ffffff?text=Neon+Waves" }],
-            followers: { total: 1250000 },
-            genres: ["Electronic", "Synthwave"]
-        },
-        {
-            id: "artist2",
-            name: "Luna Sky",
-            images: [{ url: "https://via.placeholder.com/300x300/e91e63/ffffff?text=Luna+Sky" }],
-            followers: { total: 890000 },
-            genres: ["Dream Pop"]
-        },
-        {
-            id: "artist3",
-            name: "Metro Pulse",
-            images: [{ url: "https://via.placeholder.com/300x300/9c27b0/ffffff?text=Metro+Pulse" }],
-            followers: { total: 2100000 },
-            genres: ["Hip Hop"]
-        },
-        {
-            id: "artist4",
-            name: "Coastal Breeze",
-            images: [{ url: "https://via.placeholder.com/300x300/00bcd4/ffffff?text=Coastal+Breeze" }],
-            followers: { total: 675000 },
-            genres: ["Chill"]
-        },
-        {
-            id: "artist5",
-            name: "Sunset Collective",
-            images: [{ url: "https://via.placeholder.com/300x300/ff9800/ffffff?text=Sunset" }],
-            followers: { total: 1450000 },
-            genres: ["Indie Rock"]
-        },
-        {
-            id: "artist6",
-            name: "Silk Road",
-            images: [{ url: "https://via.placeholder.com/300x300/673ab7/ffffff?text=Silk+Road" }],
-            followers: { total: 980000 },
-            genres: ["R&B"]
-        }
-    ];
-
     useEffect(() => {
         fetchUser();
-        // Simulate loading time
-        setTimeout(() => {
-            setLoading(false);
-        }, 500);
+        fetchHomeData();
     }, []);
 
     const fetchUser = async () => {
         try {
-            const res = await axios.get("http://localhost:5000/api/auth/me", {
-                withCredentials: true,
-            });
-            if (res.data.success) {
-                setUser(res.data.user);
+            const res = await axios.get(`${API}/api/auth/me`, { withCredentials: true });
+            if (res.data.success) setUser(res.data.user);
+        } catch { setUser(null); }
+    };
+
+    const fetchHomeData = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(`${API}/api/music/home`);
+            const data = await res.json();
+            if (data.success) {
+                setTrendingAlbums(data.trendingAlbums || []);
+                setPopularArtists(data.popularArtists || []);
             }
         } catch (err) {
-            setUser(null);
+            console.error("Home data error:", err);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const handleAlbumClick = (albumId) => {
-        navigate(`/album/${albumId}`);
-    };
+    const fmtNumber = (n) =>
+        n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` :
+            n >= 1_000 ? `${(n / 1_000).toFixed(1)}K` : String(n || 0);
 
-    const handleArtistClick = (artistId) => {
-        navigate(`/artist/${artistId}`);
-    };
+    const SkeletonCard = ({ circle }) => (
+        <div className="album-card skeleton-card">
+            {circle
+                ? <div className="skeleton-circle" />
+                : <div className="album-cover skeleton-cover" />
+            }
+            <div className="skeleton-text skeleton-title-line" />
+            <div className="skeleton-text skeleton-sub-line" />
+        </div>
+    );
 
     return (
         <div className="home-wrapper">
             <Navbar />
-
             <div className="home">
-                {/* New Releases */}
+
+                {/* ── Trending Albums ── */}
                 <section className="section">
-                    <h2>New Releases</h2>
+                    <h2>🔥 Trending Albums</h2>
                     <div className="grid">
-                        {newReleases.map((album) => (
-                            <div
-                                key={album.id}
-                                className="album-card"
-                                onClick={() => handleAlbumClick(album.id)}
-                            >
-                                <div className="album-cover">
-                                    <img
-                                        src={album.images[0].url}
-                                        alt={album.name}
-                                        className="album-cover-img"
-                                    />
-                                </div>
-                                <h3>{album.name}</h3>
-                                <p>{album.artists[0].name}</p>
-                                <span className="release-date">
-                                    {new Date(album.release_date).getFullYear()}
-                                </span>
-                            </div>
-                        ))}
+                        {loading
+                            ? [...Array(8)].map((_, i) => <SkeletonCard key={i} />)
+                            : trendingAlbums.length > 0
+                                ? trendingAlbums.map(album => (
+                                    <div key={album.lastfm_key} className="album-card"
+                                        onClick={() => navigate(`/album/${encodeURIComponent(album.lastfm_key)}`)}>
+                                        <div className="album-cover">
+                                            {album.cover_url || album.thumb_url ? (
+                                                <>
+                                                    <img
+                                                        src={album.cover_url || album.thumb_url}
+                                                        alt={album.title}
+                                                        className="album-cover-img"
+                                                        onError={e => {
+                                                            e.target.style.display = "none";
+                                                            e.target.nextSibling.style.display = "flex";
+                                                        }}
+                                                    />
+                                                    <div className="album-cover-fallback" style={{ display: "none" }}>💿</div>
+                                                </>
+                                            ) : (
+                                                <div className="album-cover-fallback">💿</div>
+                                            )}
+                                        </div>
+                                        <h3>{album.title}</h3>
+                                        <p>{album.artist}</p>
+                                        <div className="album-card-bottom">
+                                            {album.avgRating && (
+                                                <span className="album-card-rating">★ {album.avgRating}</span>
+                                            )}
+                                            {album.lastfm_listeners > 0 && (
+                                                <span className="album-card-listeners">
+                                                    👥 {fmtNumber(album.lastfm_listeners)}
+                                                </span>
+                                            )}
+                                            {album.lastfm_playcount > 0 && (
+                                                <span className="album-card-listeners">
+                                                    🔥 {fmtNumber(album.lastfm_playcount)}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {album.lastfm_tags?.length > 0 && (
+                                            <div className="album-card-tags">
+                                                {album.lastfm_tags.slice(0, 2).map(tag => (
+                                                    <span key={tag} className="album-card-tag">{tag}</span>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                                : (
+                                    <div className="home-empty-state">
+                                        <p>Seeding music data… check back in a minute, or <Link to="/search">search for an album</Link>.</p>
+                                    </div>
+                                )
+                        }
                     </div>
                 </section>
 
-                {/* Featured Albums */}
+                {/* ── Popular Artists ── */}
                 <section className="section">
-                    <h2>Featured Albums</h2>
+                    <h2>🎤 Popular Artists</h2>
                     <div className="grid">
-                        {featuredAlbums.map((album) => (
-                            <div
-                                key={album.id}
-                                className="album-card"
-                                onClick={() => handleAlbumClick(album.id)}
-                            >
-                                <div className="album-cover">
-                                    <img
-                                        src={album.images[0].url}
-                                        alt={album.name}
-                                        className="album-cover-img"
-                                    />
-                                </div>
-                                <h3>{album.name}</h3>
-                                <p>{album.artists[0].name}</p>
-                            </div>
-                        ))}
+                        {loading
+                            ? [...Array(6)].map((_, i) => <SkeletonCard key={i} circle />)
+                            : popularArtists.length > 0
+                                ? popularArtists.map(artist => (
+                                    <div key={artist.lastfm_key} className="artist-card"
+                                        onClick={() => navigate(`/artist/${encodeURIComponent(artist.lastfm_key)}`)}>
+                                        <div className="artist-image">
+                                            {artist.image_url || artist.thumb_url ? (
+                                                <>
+                                                    <img
+                                                        src={artist.image_url || artist.thumb_url}
+                                                        alt={artist.name}
+                                                        className="artist-image-img"
+                                                        onError={e => {
+                                                            e.target.style.display = "none";
+                                                            e.target.nextSibling.style.display = "flex";
+                                                        }}
+                                                    />
+                                                    <div className="artist-image-fallback" style={{ display: "none" }}>
+                                                        {artist.name?.charAt(0).toUpperCase()}
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className="artist-image-fallback">
+                                                    {artist.name?.charAt(0).toUpperCase()}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <p>{artist.name}</p>
+                                        {artist.lastfm_listeners > 0 && (
+                                            <span className="artist-fans">{fmtNumber(artist.lastfm_listeners)} listeners</span>
+                                        )}
+                                        {artist.lastfm_tags?.length > 0 && (
+                                            <span className="artist-genre">{artist.lastfm_tags[0]}</span>
+                                        )}
+                                    </div>
+                                ))
+                                : (
+                                    <div className="home-empty-state">
+                                        <p>Seeding artist data… <Link to="/search">search for an artist</Link> to get started.</p>
+                                    </div>
+                                )
+                        }
                     </div>
                 </section>
 
-                {/* Trending Artists */}
-                <section className="section">
-                    <h2>Popular Artists</h2>
-                    <div className="grid">
-                        {trendingArtists.map((artist) => (
-                            <div
-                                key={artist.id}
-                                className="artist-card"
-                                onClick={() => handleArtistClick(artist.id)}
-                            >
-                                <div className="artist-image">
-                                    <img
-                                        src={artist.images[0].url}
-                                        alt={artist.name}
-                                        className="artist-image-img"
-                                    />
-                                </div>
-                                <p>{artist.name}</p>
-                                <span className="artist-fans">
-                                    {artist.followers.total.toLocaleString()} followers
-                                </span>
-                                {artist.genres && artist.genres.length > 0 && (
-                                    <span className="artist-genre">
-                                        {artist.genres[0]}
-                                    </span>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
-                {/* Call to Action */}
+                {/* ── CTA ── */}
                 {!user && (
                     <section className="cta-section">
                         <h2>Join the community</h2>
                         <p>Sign up to review albums, follow artists, and share your taste.</p>
                         <div className="cta-buttons">
-                            <Link to="/register">
-                                <button className="btn primary">Register</button>
-                            </Link>
-                            <Link to="/login">
-                                <button className="btn secondary">Login</button>
-                            </Link>
+                            <Link to="/register"><button className="btn primary">Register</button></Link>
+                            <Link to="/login"><button className="btn secondary">Login</button></Link>
                         </div>
                     </section>
                 )}
