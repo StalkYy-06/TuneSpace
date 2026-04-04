@@ -66,6 +66,27 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(135deg, #333 0%, #111 100%);
+  z-index: 0;
+}
+
+.album-cover-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+.album-cover-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  background: linear-gradient(135deg, #282828, #1a1a1a);
+  z-index: 1;
 }
 
 .album-card h3,
@@ -86,10 +107,49 @@
   color: #b3b3b3;
 }
 
+/* Album card bottom row */
+.album-card-bottom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px 4px;
+  flex-wrap: wrap;
+}
+
+.album-card-rating {
+  color: #1db954;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.album-card-listeners {
+  color: #888;
+  font-size: 0.78rem;
+}
+
+/* Tags on album card */
+.album-card-tags {
+  display: flex;
+  gap: 6px;
+  padding: 0 16px 12px;
+  flex-wrap: wrap;
+}
+
+.album-card-tag {
+  background: rgba(29, 185, 84, 0.1);
+  color: #1db954;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: capitalize;
+}
+
 /* Artist Card */
 .artist-card {
   text-align: center;
   transition: transform 0.3s ease;
+  cursor: pointer;
 }
 
 .artist-card:hover {
@@ -111,12 +171,53 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(135deg, #333 0%, #111 100%);
+  z-index: 0;
+}
+
+.artist-image-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.artist-image-fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: #fff;
+  background: linear-gradient(135deg, #1db954, #1ed760);
 }
 
 .artist-card p {
   font-size: 1.1rem;
   font-weight: 500;
   color: #fff;
+}
+
+.artist-fans {
+  display: block;
+  font-size: 0.85rem;
+  color: #b3b3b3;
+  margin-top: 4px;
+}
+
+.artist-genre {
+  display: block;
+  font-size: 0.78rem;
+  color: #1db954;
+  margin-top: 4px;
+  text-transform: capitalize;
 }
 
 /* Reviews List */
@@ -183,15 +284,6 @@
   color: #1db954;
 }
 
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
 /* CTA Section */
 .cta-section {
   text-align: center;
@@ -245,4 +337,212 @@
 .secondary:hover {
   background: #1db954;
   color: black;
+}
+
+/* Home empty state */
+.home-empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 48px 20px;
+  color: #666;
+  font-size: 1rem;
+}
+
+.home-empty-state a {
+  color: #1db954;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.home-empty-state a:hover {
+  text-decoration: underline;
+}
+
+/* Skeleton loading */
+.skeleton-card {
+  pointer-events: none;
+  cursor: default;
+}
+
+.skeleton-cover {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #1e1e1e 0%, #282828 50%, #1e1e1e 100%);
+  background-size: 200% 100%;
+  animation: home-shimmer 1.4s infinite;
+}
+
+.skeleton-circle {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  background: linear-gradient(90deg, #1e1e1e 0%, #282828 50%, #1e1e1e 100%);
+  background-size: 200% 100%;
+  animation: home-shimmer 1.4s infinite;
+}
+
+.skeleton-text {
+  border-radius: 6px;
+  background: linear-gradient(90deg, #1e1e1e 0%, #282828 50%, #1e1e1e 100%);
+  background-size: 200% 100%;
+  animation: home-shimmer 1.4s infinite;
+  margin: 0 16px 8px;
+}
+
+.skeleton-title-line {
+  height: 14px;
+  width: 70%;
+}
+
+.skeleton-sub-line {
+  height: 12px;
+  width: 50%;
+}
+
+@keyframes home-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* AlbumDetail skeleton */
+.ad-skeleton-header {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 50px;
+  margin-bottom: 50px;
+}
+
+.ad-skeleton-info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 20px;
+}
+
+.ad-skeleton {
+  background: linear-gradient(90deg, #1e1e1e 0%, #282828 50%, #1e1e1e 100%);
+  background-size: 200% 100%;
+  animation: home-shimmer 1.4s infinite;
+  border-radius: 8px;
+}
+
+.ad-skeleton-cover {
+  width: 300px;
+  height: 300px;
+  border-radius: 12px;
+}
+
+.ad-skeleton-title {
+  height: 48px;
+  width: 80%;
+}
+
+.ad-skeleton-sub {
+  height: 20px;
+  width: 60%;
+}
+
+.ad-skeleton-tracks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 40px;
+}
+
+.ad-skeleton-track {
+  height: 52px;
+  border-radius: 8px;
+}
+
+/* AlbumDetail styles */
+.album-cover-placeholder-box {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #282828, #1a1a1a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 5rem;
+  border-radius: 12px;
+}
+
+.album-tags-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.album-tag {
+  background: rgba(29, 185, 84, 0.12);
+  color: #1db954;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  text-transform: capitalize;
+}
+
+.album-genre-tag {
+  background: rgba(255, 255, 255, 0.07);
+  color: #b3b3b3;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  text-transform: capitalize;
+}
+
+.album-label {
+  color: #1db954;
+  font-weight: 600;
+}
+
+.album-wiki {
+  margin-top: 16px;
+  color: #999;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  max-width: 520px;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.track-extra-artists {
+  display: block;
+  font-size: 0.78rem;
+  color: #888;
+  margin-top: 2px;
+}
+
+/* ArtistDetail styles */
+.artist-image-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #1db954, #1ed760);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 6rem;
+  font-weight: 900;
+  color: white;
+}
+
+.artist-bio {
+  margin-top: 16px;
+  color: #999;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  max-width: 560px;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }

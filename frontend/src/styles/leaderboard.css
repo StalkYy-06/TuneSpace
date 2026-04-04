@@ -1,0 +1,490 @@
+/* ============================================================
+   leaderboard.css
+   ============================================================ */
+
+.lb-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #0d0d0d;
+}
+
+.lb-main {
+  flex: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 20px 80px;
+}
+
+/* ── Hero ── */
+.lb-hero {
+  padding: 48px 0 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  margin-bottom: 40px;
+}
+
+.lb-hero-title {
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: #fff;
+  margin: 0 0 8px;
+  letter-spacing: -1px;
+}
+
+.lb-hero-sub {
+  color: #888;
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* Period tabs */
+.lb-period-tabs {
+  display: flex;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50px;
+  padding: 5px;
+}
+
+.lb-period-tab {
+  padding: 9px 22px;
+  border-radius: 50px;
+  border: none;
+  background: transparent;
+  color: #888;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  white-space: nowrap;
+}
+
+.lb-period-tab:hover {
+  color: #e0e0e0;
+}
+
+.lb-period-tab.active {
+  background: #1db954;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(29, 185, 84, 0.35);
+}
+
+/* ── Podium Section ── */
+.lb-section-label {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #e0e0e0;
+  margin: 0 0 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lb-podium-section {
+  margin-bottom: 52px;
+}
+
+.lb-podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 16px;
+  padding: 0 20px;
+}
+
+.lb-podium-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.22s ease;
+  flex: 1;
+  max-width: 200px;
+}
+
+.lb-podium-slot:hover {
+  transform: translateY(-6px);
+}
+
+.lb-podium-place-1 {
+  order: 2;
+}
+.lb-podium-place-2 {
+  order: 1;
+}
+.lb-podium-place-3 {
+  order: 3;
+}
+
+.lb-podium-medal {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  line-height: 1;
+}
+
+.lb-podium-username {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e0e0e0;
+  margin: 10px 0 4px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+.lb-podium-value {
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.lb-podium-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #888;
+}
+
+.lb-podium-stand {
+  width: 100%;
+  border-radius: 10px 10px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.85;
+  transition: opacity 0.2s;
+}
+
+.lb-podium-slot:hover .lb-podium-stand {
+  opacity: 1;
+}
+
+.lb-podium-place-num {
+  font-size: 2rem;
+  font-weight: 900;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+/* ── Cards Grid ── */
+.lb-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+/* ── Card ── */
+.lb-card {
+  background: #181818;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: border-color 0.25s ease;
+}
+
+.lb-card:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.lb-card-header {
+  padding: 24px 24px 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), transparent);
+}
+
+.lb-card-icon {
+  font-size: 2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.lb-card-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 4px;
+}
+
+.lb-card-desc {
+  font-size: 0.8rem;
+  color: #666;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.lb-card-body {
+  padding: 16px 0;
+}
+
+/* ── Entries ── */
+.lb-entries {
+  display: flex;
+  flex-direction: column;
+}
+
+.lb-entry {
+  display: grid;
+  grid-template-columns: 44px 1fr 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background 0.18s ease;
+  border-radius: 0;
+}
+
+.lb-entry:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.lb-entry-top {
+  background: rgba(29, 185, 84, 0.05);
+  border-left: 3px solid var(--cat-color, #1db954);
+}
+
+.lb-entry-top:hover {
+  background: rgba(29, 185, 84, 0.09);
+}
+
+/* Rank */
+.lb-entry-rank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lb-rank-medal {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.lb-rank-num {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #555;
+}
+
+/* User */
+.lb-entry-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.lb-entry-username {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #e0e0e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Avatar */
+.lb-avatar-img {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.lb-avatar-letter {
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1db954, #1ed760);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Bar */
+.lb-entry-bar-wrap {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.lb-entry-bar {
+  height: 100%;
+  background: var(--cat-color, #1db954);
+  border-radius: 3px;
+  min-width: 4px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.75;
+}
+
+.lb-entry-top .lb-entry-bar {
+  opacity: 1;
+}
+
+/* Value */
+.lb-entry-value {
+  text-align: right;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.lb-value-num {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #e0e0e0;
+  display: block;
+}
+
+.lb-value-label {
+  font-size: 0.7rem;
+  color: #666;
+  font-weight: 500;
+}
+
+/* ── Empty state ── */
+.lb-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  color: #555;
+  text-align: center;
+}
+
+.lb-empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  opacity: 0.4;
+}
+
+.lb-empty p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* ── Skeleton loading ── */
+.lb-loading-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 20px;
+}
+
+.lb-skeleton-row {
+  display: grid;
+  grid-template-columns: 44px 44px 1fr 60px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.lb-skeleton {
+  background: linear-gradient(90deg, #222 0%, #2a2a2a 50%, #222 100%);
+  background-size: 200% 100%;
+  animation: lb-shimmer 1.4s infinite;
+  border-radius: 6px;
+}
+
+.lb-skeleton-rank {
+  width: 30px;
+  height: 20px;
+}
+.lb-skeleton-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+.lb-skeleton-name {
+  height: 14px;
+}
+.lb-skeleton-value {
+  height: 14px;
+}
+
+@keyframes lb-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .lb-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .lb-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 32px 0 28px;
+  }
+
+  .lb-hero-title {
+    font-size: 2rem;
+  }
+
+  .lb-period-tabs {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .lb-period-tab {
+    flex: 1;
+    text-align: center;
+    padding: 9px 12px;
+    font-size: 0.82rem;
+  }
+
+  .lb-podium {
+    gap: 10px;
+    padding: 0;
+  }
+
+  .lb-podium-username {
+    font-size: 0.8rem;
+    max-width: 100px;
+  }
+
+  .lb-podium-value {
+    font-size: 0.9rem;
+  }
+
+  .lb-entry {
+    grid-template-columns: 36px 1fr 80px auto;
+    padding: 10px 16px;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .lb-podium {
+    gap: 6px;
+  }
+
+  .lb-entry {
+    grid-template-columns: 32px 1fr auto;
+    gap: 8px;
+  }
+
+  .lb-entry-bar-wrap {
+    display: none;
+  }
+}

@@ -91,10 +91,10 @@ export default function Navbar() {
                             <Link to="/" className="nav-link">Home</Link>
                         </li>
                         <li className="nav-item">
-                            <Link to="/browse" className="nav-link">Browse</Link>
+                            <Link to="/search" className="nav-link">Search</Link>
                         </li>
                         <li className="nav-item">
-                            <Link to="/reviews" className="nav-link">Reviews</Link>
+                            <Link to="/leaderboard" className="nav-link">Leaderboard</Link>
                         </li>
                     </ul>
 
