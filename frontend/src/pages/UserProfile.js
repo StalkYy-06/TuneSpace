@@ -164,8 +164,8 @@ const UserProfile = () => {
 
     const { user, stats, reviews } = profileData;
     const ratingDist = getRatingDistribution(reviews);
-    const maxDistCount = Math.max(...Object.values(ratingDist), 1);
     const totalRatings = Object.values(ratingDist).reduce((a, b) => a + b, 0);
+    const maxDistCount = Math.max(totalRatings, 1);
 
     return (
         <div className="up-wrapper">

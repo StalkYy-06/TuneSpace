@@ -148,6 +148,72 @@ function ActivityItem({ activity, navigate, API_URL }) {
         );
     }
 
+    if (type === "favourited_album") {
+        return (
+            <div
+                className="act-item act-favourited"
+                onClick={() => navigate(`/album/${activity.albumId}`)}
+            >
+                <div className="act-icon-wrap act-icon-fav">
+                    {activity.coverImage ? (
+                        <img
+                            src={activity.coverImage}
+                            alt={activity.albumName}
+                            className="act-album-thumb"
+                        />
+                    ) : (
+                        "♥"
+                    )}
+                </div>
+                <div className="act-body">
+                    <div className="act-main-line">
+                        <span className="act-verb">You favourited</span>
+                        <span className="act-subject">{activity.albumName}</span>
+                    </div>
+                    <div className="act-sub-line">
+                        <span className="act-verb">by</span>
+                        <span className="act-subject-dim">{activity.artistName}</span>
+                    </div>
+                    <span className="act-time">{ago}</span>
+                </div>
+                <div className="act-type-badge act-badge-fav">Favourited</div>
+            </div>
+        );
+    }
+
+    if (type === "listened_album") {
+        return (
+            <div
+                className="act-item act-listened"
+                onClick={() => navigate(`/album/${activity.albumId}`)}
+            >
+                <div className="act-icon-wrap act-icon-listened">
+                    {activity.coverImage ? (
+                        <img
+                            src={activity.coverImage}
+                            alt={activity.albumName}
+                            className="act-album-thumb"
+                        />
+                    ) : (
+                        "👂"
+                    )}
+                </div>
+                <div className="act-body">
+                    <div className="act-main-line">
+                        <span className="act-verb">You listened to</span>
+                        <span className="act-subject">{activity.albumName}</span>
+                    </div>
+                    <div className="act-sub-line">
+                        <span className="act-verb">by</span>
+                        <span className="act-subject-dim">{activity.artistName}</span>
+                    </div>
+                    <span className="act-time">{ago}</span>
+                </div>
+                <div className="act-type-badge act-badge-listened">Listened</div>
+            </div>
+        );
+    }
+
     return null;
 }
 
@@ -167,15 +233,10 @@ export default function Profile() {
     const [favouriteAlbums, setFavouriteAlbums] = useState([]);
     const [favouritesLoading, setFavouritesLoading] = useState(false);
 
-    const [formData, setFormData] = useState({
-        username: "",
-        bio: ""
-    });
+    const [formData, setFormData] = useState({ username: "", bio: "" });
     const [errors, setErrors] = useState({});
 
     const navigate = useNavigate();
-
-
 
     useEffect(() => {
         fetchProfile();
@@ -185,12 +246,8 @@ export default function Profile() {
     const fetchFavouriteAlbums = async () => {
         setFavouritesLoading(true);
         try {
-            const res = await axios.get(`${API_URL}/api/favourites/me`, {
-                withCredentials: true
-            });
-            if (res.data.success) {
-                setFavouriteAlbums(res.data.favourites || []);
-            }
+            const res = await axios.get(`${API_URL}/api/favourites/me`, { withCredentials: true });
+            if (res.data.success) setFavouriteAlbums(res.data.favourites || []);
         } catch (err) {
             console.error("Failed to fetch favourite albums:", err);
         } finally {
@@ -216,17 +273,11 @@ export default function Profile() {
 
     const fetchProfile = async () => {
         try {
-            const res = await axios.get(`${API_URL}/api/profile/me`, {
-                withCredentials: true
-            });
+            const res = await axios.get(`${API_URL}/api/profile/me`, { withCredentials: true });
             if (res.data.success) {
                 setUser(res.data.user);
-                setFormData({
-                    username: res.data.user.username,
-                    bio: res.data.user.bio || ""
-                });
+                setFormData({ username: res.data.user.username, bio: res.data.user.bio || "" });
 
-                // Fetch extended profile data (stats + reviews)
                 const profileRes = await axios.get(
                     `${API_URL}/api/profile/user/${res.data.user.username}`,
                     { withCredentials: true }
@@ -238,9 +289,7 @@ export default function Profile() {
             }
         } catch (err) {
             console.error("Failed to fetch profile:", err);
-            if (err.response?.status === 401) {
-                navigate("/login");
-            }
+            if (err.response?.status === 401) navigate("/login");
         } finally {
             setLoading(false);
         }
@@ -250,12 +299,8 @@ export default function Profile() {
         if (activityLoading) return;
         setActivityLoading(true);
         try {
-            const res = await axios.get(`${API_URL}/api/profile/activity/feed`, {
-                withCredentials: true
-            });
-            if (res.data.success) {
-                setActivities(res.data.activities || []);
-            }
+            const res = await axios.get(`${API_URL}/api/profile/activity/feed`, { withCredentials: true });
+            if (res.data.success) setActivities(res.data.activities || []);
         } catch (err) {
             console.error("Failed to fetch activity:", err);
         } finally {
@@ -275,14 +320,8 @@ export default function Profile() {
     const handleUpdateProfile = async (e) => {
         e.preventDefault();
         setErrors({});
-
         try {
-            const res = await axios.put(
-                `${API_URL}/api/profile/update`,
-                formData,
-                { withCredentials: true }
-            );
-
+            const res = await axios.put(`${API_URL}/api/profile/update`, formData, { withCredentials: true });
             if (res.data.success) {
                 setUser(res.data.user);
                 setEditing(false);
@@ -290,11 +329,8 @@ export default function Profile() {
             }
         } catch (err) {
             const data = err.response?.data;
-            if (data?.field) {
-                setErrors({ [data.field]: data.message });
-            } else {
-                alert(data?.message || "Update failed");
-            }
+            if (data?.field) setErrors({ [data.field]: data.message });
+            else alert(data?.message || "Update failed");
         }
     };
 
@@ -302,31 +338,18 @@ export default function Profile() {
         const file = e.target.files[0];
         if (!file) return;
 
-        if (file.size > 5 * 1024 * 1024) {
-            alert("File size must be less than 5MB");
-            return;
-        }
-
+        if (file.size > 5 * 1024 * 1024) { alert("File size must be less than 5MB"); return; }
         const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
-        if (!allowedTypes.includes(file.type)) {
-            alert("Only image files are allowed (JPEG, PNG, GIF, WebP)");
-            return;
-        }
+        if (!allowedTypes.includes(file.type)) { alert("Only image files are allowed (JPEG, PNG, GIF, WebP)"); return; }
 
         const uploadData = new FormData();
         uploadData.append("profilePicture", file);
-
         setUploading(true);
         try {
-            const res = await axios.post(
-                `${API_URL}/api/profile/upload-picture`,
-                uploadData,
-                {
-                    withCredentials: true,
-                    headers: { "Content-Type": "multipart/form-data" }
-                }
-            );
-
+            const res = await axios.post(`${API_URL}/api/profile/upload-picture`, uploadData, {
+                withCredentials: true,
+                headers: { "Content-Type": "multipart/form-data" }
+            });
             if (res.data.success) {
                 setUser({ ...user, profilePicture: res.data.profilePicture });
                 alert("Profile picture updated!");
@@ -340,12 +363,8 @@ export default function Profile() {
 
     const handleDeletePicture = async () => {
         if (!window.confirm("Are you sure you want to delete your profile picture?")) return;
-
         try {
-            const res = await axios.delete(`${API_URL}/api/profile/delete-picture`, {
-                withCredentials: true
-            });
-
+            const res = await axios.delete(`${API_URL}/api/profile/delete-picture`, { withCredentials: true });
             if (res.data.success) {
                 setUser({ ...user, profilePicture: null });
                 alert("Profile picture deleted");
@@ -357,12 +376,7 @@ export default function Profile() {
 
     const handleToggle2FA = async () => {
         try {
-            const res = await axios.post(
-                `${API_URL}/api/profile/toggle-2fa`,
-                {},
-                { withCredentials: true }
-            );
-
+            const res = await axios.post(`${API_URL}/api/profile/toggle-2fa`, {}, { withCredentials: true });
             if (res.data.success) {
                 setUser({ ...user, twoFactorEnabled: res.data.twoFactorEnabled });
                 alert(res.data.message);
@@ -374,31 +388,18 @@ export default function Profile() {
 
     const handleDeleteReview = async (reviewId) => {
         if (!window.confirm("Are you sure you want to delete this review?")) return;
-
         try {
-            const res = await axios.delete(`${API_URL}/api/reviews/${reviewId}`, {
-                withCredentials: true
-            });
-
-            if (res.data.success) {
-                fetchProfile();
-                alert("Review deleted successfully!");
-            }
+            const res = await axios.delete(`${API_URL}/api/reviews/${reviewId}`, { withCredentials: true });
+            if (res.data.success) { fetchProfile(); alert("Review deleted successfully!"); }
         } catch (err) {
             alert(err.response?.data?.message || "Failed to delete review");
         }
     };
 
     const handleDeleteAccount = async () => {
-        if (deleteConfirmation !== "DELETE") {
-            alert("Please type DELETE to confirm");
-            return;
-        }
-
+        if (deleteConfirmation !== "DELETE") { alert("Please type DELETE to confirm"); return; }
         try {
-            await axios.delete(`${API_URL}/api/profile/delete-account`, {
-                withCredentials: true
-            });
+            await axios.delete(`${API_URL}/api/profile/delete-account`, { withCredentials: true });
             alert("Account deleted successfully");
             navigate("/");
         } catch (err) {
@@ -437,38 +438,20 @@ export default function Profile() {
                         <div className="profile-picture-section">
                             <div className="profile-picture-wrapper">
                                 {user.profilePicture ? (
-                                    <img
-                                        src={`${API_URL}${user.profilePicture}`}
-                                        alt={user.username}
-                                        className="profile-picture"
-                                    />
+                                    <img src={`${API_URL}${user.profilePicture}`} alt={user.username} className="profile-picture" />
                                 ) : (
-                                    <div className="profile-picture-placeholder">
-                                        {user.username.charAt(0).toUpperCase()}
-                                    </div>
+                                    <div className="profile-picture-placeholder">{user.username.charAt(0).toUpperCase()}</div>
                                 )}
                                 {uploading && <div className="upload-overlay">Uploading...</div>}
                             </div>
 
                             <div className="picture-actions">
                                 <label className="upload-btn">
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handlePictureUpload}
-                                        disabled={uploading}
-                                        style={{ display: "none" }}
-                                    />
+                                    <input type="file" accept="image/*" onChange={handlePictureUpload} disabled={uploading} style={{ display: "none" }} />
                                     {user.profilePicture ? "Change Picture" : "Upload Picture"}
                                 </label>
-
                                 {user.profilePicture && (
-                                    <button
-                                        className="delete-picture-btn"
-                                        onClick={handleDeletePicture}
-                                    >
-                                        Delete Picture
-                                    </button>
+                                    <button className="delete-picture-btn" onClick={handleDeletePicture}>Delete Picture</button>
                                 )}
                             </div>
                         </div>
@@ -476,9 +459,7 @@ export default function Profile() {
                         <div className="profile-info">
                             <h1>{user.username}</h1>
                             <p className="email">{user.email}</p>
-                            <p className="member-since">
-                                Member since {new Date(user.createdAt).toLocaleDateString()}
-                            </p>
+                            <p className="member-since">Member since {new Date(user.createdAt).toLocaleDateString()}</p>
                         </div>
                     </div>
 
@@ -520,17 +501,9 @@ export default function Profile() {
                             <>
                                 <div className="detail-section">
                                     <h3>About</h3>
-                                    <p className="bio">
-                                        {user.bio || "No bio yet. Click edit to add one."}
-                                    </p>
+                                    <p className="bio">{user.bio || "No bio yet. Click edit to add one."}</p>
                                 </div>
-
-                                <button
-                                    className="edit-btn"
-                                    onClick={() => setEditing(true)}
-                                >
-                                    Edit Profile
-                                </button>
+                                <button className="edit-btn" onClick={() => setEditing(true)}>Edit Profile</button>
                             </>
                         ) : (
                             <form onSubmit={handleUpdateProfile} className="edit-form">
@@ -564,10 +537,7 @@ export default function Profile() {
                                         className="cancel-btn"
                                         onClick={() => {
                                             setEditing(false);
-                                            setFormData({
-                                                username: user.username,
-                                                bio: user.bio || ""
-                                            });
+                                            setFormData({ username: user.username, bio: user.bio || "" });
                                             setErrors({});
                                         }}
                                     >
@@ -635,19 +605,12 @@ export default function Profile() {
 
                                                     <div className="review-rating">
                                                         {[...Array(5)].map((_, i) => (
-                                                            <span
-                                                                key={i}
-                                                                style={{ color: i < review.rating ? "#ffc107" : "#444" }}
-                                                            >
-                                                                ★
-                                                            </span>
+                                                            <span key={i} style={{ color: i < review.rating ? "#ffc107" : "#444" }}>★</span>
                                                         ))}
                                                         <span style={{ fontSize: "0.8rem", color: "#888", marginLeft: 8 }}>{review.rating}/5</span>
                                                     </div>
 
-                                                    <p className="review-text">
-                                                        {review.reviewText || "(No review text)"}
-                                                    </p>
+                                                    <p className="review-text">{review.reviewText || "(No review text)"}</p>
 
                                                     <div className="review-meta">
                                                         <span className="review-date">
@@ -676,7 +639,7 @@ export default function Profile() {
                                         <div className="no-content-state">
                                             <div className="no-content-icon">⚡</div>
                                             <h3>No Activity Yet</h3>
-                                            <p>Your reviews, follows, and likes will show up here.</p>
+                                            <p>Your reviews, follows, likes, favourites and listens will show up here.</p>
                                         </div>
                                     ) : (
                                         <div className="activity-feed">
@@ -695,7 +658,7 @@ export default function Profile() {
                         </div>
                     </div>
 
-                    {/* Review Rating Distribution — from real reviews */}
+                    {/* Rating Distribution */}
                     {reviews.length > 0 && (() => {
                         const dist = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
                         reviews.forEach(r => { if (r.rating >= 1 && r.rating <= 5) dist[Math.round(r.rating)]++; });
@@ -733,9 +696,7 @@ export default function Profile() {
                     <div className="list-section">
                         <h3>Favorite Albums</h3>
                         {favouritesLoading ? (
-                            <div className="no-content-state">
-                                <p>Loading favourites...</p>
-                            </div>
+                            <div className="no-content-state"><p>Loading favourites...</p></div>
                         ) : favouriteAlbums.length === 0 ? (
                             <div className="no-content-state">
                                 <div className="no-content-icon">💿</div>
@@ -752,11 +713,7 @@ export default function Profile() {
                                     >
                                         <div className="album-cover-wrap">
                                             {album.coverImage ? (
-                                                <img
-                                                    src={album.coverImage}
-                                                    alt={album.albumName}
-                                                    className="album-cover-img"
-                                                />
+                                                <img src={album.coverImage} alt={album.albumName} className="album-cover-img" />
                                             ) : (
                                                 <div className="album-cover-placeholder">
                                                     <span className="album-cover-icon">💿</span>
@@ -764,10 +721,7 @@ export default function Profile() {
                                             )}
                                             <button
                                                 className="album-remove-btn"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleRemoveFavourite(album.albumId);
-                                                }}
+                                                onClick={(e) => { e.stopPropagation(); handleRemoveFavourite(album.albumId); }}
                                                 title="Remove from favourites"
                                             >
                                                 ✕
@@ -815,20 +769,13 @@ export default function Profile() {
                                 <h4>Delete Account</h4>
                                 <p>Permanently delete your account and all data</p>
                             </div>
-                            <button
-                                className="danger-btn"
-                                onClick={() => setShowDeleteModal(true)}
-                            >
-                                Delete Account
-                            </button>
+                            <button className="danger-btn" onClick={() => setShowDeleteModal(true)}>Delete Account</button>
                         </div>
                     </div>
 
                     {/* Logout */}
                     <div className="logout-section">
-                        <button onClick={handleLogout} className="logout-button">
-                            Logout
-                        </button>
+                        <button onClick={handleLogout} className="logout-button">Logout</button>
                     </div>
                 </div>
             </main>
@@ -842,9 +789,7 @@ export default function Profile() {
                             This action cannot be undone. This will permanently delete your account,
                             all your reviews, favorites, and followers.
                         </p>
-                        <p className="modal-instruction">
-                            Type <strong>DELETE</strong> to confirm:
-                        </p>
+                        <p className="modal-instruction">Type <strong>DELETE</strong> to confirm:</p>
                         <input
                             type="text"
                             value={deleteConfirmation}
@@ -862,10 +807,7 @@ export default function Profile() {
                             </button>
                             <button
                                 className="modal-cancel-btn"
-                                onClick={() => {
-                                    setShowDeleteModal(false);
-                                    setDeleteConfirmation("");
-                                }}
+                                onClick={() => { setShowDeleteModal(false); setDeleteConfirmation(""); }}
                             >
                                 Cancel
                             </button>
