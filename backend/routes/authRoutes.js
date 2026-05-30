@@ -6,6 +6,8 @@ import jwt from "jsonwebtoken";
 import { generateToken, setAuthCookie, clearAuthCookie } from "../utils/jwt.js";
 import { authRateLimiter, otpRateLimiter } from "../middleware/rateLimiter.js";
 import { sendAndStoreOTP, verifyOTP } from "../utils/otp.js";
+import JWT_SECRET from "../utils/jwtSecret.js";
+import { getActiveBan, rejectIfBanned } from "../middleware/checkBan.js";
 
 const router = express.Router();
 
@@ -119,12 +121,27 @@ router.post("/login", authRateLimiter, async (req, res) => {
         const match = await bcrypt.compare(password, user.password);
         if (!match) return sendError(res, "password", "Invalid credentials.");
 
+        if (!user.emailVerified) {
+            return sendError(res, "email", "Please verify your email before logging in.");
+        }
+
+        if (await getActiveBan(user._id)) {
+            return res.status(403).json({ success: false, message: "Your account has been banned." });
+        }
+
+        if (user.twoFactorEnabled) {
+            return res.json({
+                success: true,
+                user: { email: user.email, requires2FA: true },
+            });
+        }
+
         const token = generateToken(user._id);
         setAuthCookie(res, token);
 
         res.json({
             success: true,
-            user: { username: user.username, email: user.email, requires2FA: user.twoFactorEnabled },
+            user: { username: user.username, email: user.email, requires2FA: false },
         });
     } catch (err) {
         console.error(err);
@@ -176,6 +193,10 @@ router.post("/verify-2fa", otpRateLimiter, async (req, res) => {
         const user = await User.findOne({ email: email.toLowerCase() });
         if (!user) return sendError(res, "email", "User not found.");
 
+        if (await getActiveBan(user._id)) {
+            return res.status(403).json({ success: false, message: "Your account has been banned." });
+        }
+
         const token = generateToken(user._id);
         setAuthCookie(res, token);
 
@@ -215,11 +236,11 @@ router.post("/reset-password", otpRateLimiter, async (req, res) => {
     if (!passwordRegex.test(newPassword))
         return sendError(res, "newPassword", "Password too weak. Use 8+ chars, uppercase, number, symbol.");
 
-    const isValid = await verifyOTP(email, otp, "forgot-password");
-    if (!isValid)
-        return res.status(400).json({ success: false, message: "Invalid or expired code" });
-
     try {
+        const isValid = await verifyOTP(email, otp, "forgot-password");
+        if (!isValid)
+            return res.status(400).json({ success: false, message: "Invalid or expired code" });
+
         const salt = await bcrypt.genSalt(10);
         const hashed = await bcrypt.hash(newPassword, salt);
 
@@ -241,7 +262,9 @@ router.get("/me", async (req, res) => {
     if (!token) return res.status(401).json({ success: false, message: "Not authenticated" });
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, JWT_SECRET);
+        if (await rejectIfBanned(decoded.id, res)) return;
+
         const user = await User.findById(decoded.id).select("-password");
         if (!user) return res.status(404).json({ success: false, message: "User not found" });
 

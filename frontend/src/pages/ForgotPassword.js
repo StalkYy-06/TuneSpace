@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/forgot.css";
+import { API_URL } from "../config/api";
 
 export default function ForgotPassword() {
     const [email, setEmail] = useState("");
@@ -19,7 +20,7 @@ export default function ForgotPassword() {
         setError("");
 
         try {
-            await axios.post("http://localhost:5000/api/auth/forgot-password", { email });
+            await axios.post(`${API_URL}/api/auth/forgot-password`, { email });
             setOtpSent(true);
         } catch (err) {
             setError(err.response?.data?.message || "Failed to send OTP");
@@ -34,7 +35,7 @@ export default function ForgotPassword() {
         setError("");
 
         try {
-            await axios.post("http://localhost:5000/api/auth/reset-password", {
+            await axios.post(`${API_URL}/api/auth/reset-password`, {
                 email,
                 otp,
                 newPassword,

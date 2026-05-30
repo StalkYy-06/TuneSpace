@@ -2,6 +2,7 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import Admin from "../models/Admin.js";
+import JWT_SECRET from "../utils/jwtSecret.js";
 
 const router = express.Router();
 
@@ -12,7 +13,7 @@ const verifyAdminToken = (req, res, next) => {
         if (!token) {
             return res.status(401).json({ success: false, message: "Unauthorized" });
         }
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || "your-secret-key");
+        const decoded = jwt.verify(token, JWT_SECRET);
         if (decoded.role !== "admin" && decoded.role !== "superadmin") {
             return res.status(403).json({ success: false, message: "Forbidden - Admin access only" });
         }
@@ -63,7 +64,7 @@ router.post("/login", async (req, res) => {
                 username: admin.username,
                 role: admin.role
             },
-            process.env.JWT_SECRET || "your-secret-key",
+            JWT_SECRET,
             { expiresIn: "24h" }
         );
 

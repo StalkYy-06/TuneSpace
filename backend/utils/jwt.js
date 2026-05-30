@@ -1,8 +1,9 @@
 // utils/jwt.js
 import jwt from "jsonwebtoken";
+import JWT_SECRET from "./jwtSecret.js";
 
 const generateToken = (userId) => {
-    return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+    return jwt.sign({ id: userId }, JWT_SECRET, {
         expiresIn: "7d", // Token expires in 7 days
     });
 };

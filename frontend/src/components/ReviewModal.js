@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "../styles/reviewModal.css";
+import { API_URL } from "../config/api";
 
 const ReviewModal = ({
     isOpen,
@@ -33,7 +34,7 @@ const ReviewModal = ({
         const checkAuthentication = async () => {
             try {
                 const response = await fetch(
-                    `http://localhost:5000/api/reviews/${contentType}/${contentId}/user`,
+                    `${API_URL}/api/reviews/${contentType}/${contentId}/user`,
                     {
                         method: "GET",
                         credentials: "include"
@@ -73,7 +74,7 @@ const ReviewModal = ({
         setError("");
 
         try {
-            const response = await fetch("http://localhost:5000/api/reviews/create", {
+            const response = await fetch(`${API_URL}/api/reviews/create`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

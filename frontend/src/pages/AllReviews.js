@@ -3,8 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import BottomBar from "../components/BottomBar";
 import "../styles/allReviews.css";
-
-const API = "http://localhost:5000";
+import { API_URL } from "../config/api";
 
 /* ─── Login Prompt Modal ─────────────────────────────────── */
 const LoginPrompt = ({ message, onClose }) => (
@@ -35,7 +34,7 @@ const ReviewCard = ({ review, onClick, onUsernameClick }) => {
     const [replyCount, setReplyCount] = useState(0);
 
     useEffect(() => {
-        fetch(`${API}/api/replies/review/${review._id}/count`, { credentials: "include" })
+        fetch(`${API_URL}/api/replies/review/${review._id}/count`, { credentials: "include" })
             .then(r => r.json())
             .then(d => { if (d.success) setReplyCount(d.count); })
             .catch(() => { });
@@ -152,7 +151,7 @@ const ReviewDetail = ({ review, onBack, userId, onNeedLogin, contentImage, conte
 
     const fetchReplies = useCallback(async () => {
         try {
-            const res = await fetch(`${API}/api/replies/review/${review._id}`, { credentials: "include" });
+            const res = await fetch(`${API_URL}/api/replies/review/${review._id}`, { credentials: "include" });
             const data = await res.json();
             if (data.success) setReplies(data.replies);
         } catch (err) { console.error(err); }
@@ -163,7 +162,7 @@ const ReviewDetail = ({ review, onBack, userId, onNeedLogin, contentImage, conte
     const handleLikeReview = async () => {
         if (!userId) { onNeedLogin("like a review"); return; }
         try {
-            const res = await fetch(`${API}/api/reviews/${review._id}/like`, {
+            const res = await fetch(`${API_URL}/api/reviews/${review._id}/like`, {
                 method: "POST", credentials: "include"
             });
             const data = await res.json();
@@ -174,7 +173,7 @@ const ReviewDetail = ({ review, onBack, userId, onNeedLogin, contentImage, conte
     const handleLikeReply = async (replyId) => {
         if (!userId) { onNeedLogin("like a comment"); return; }
         try {
-            const res = await fetch(`${API}/api/replies/${replyId}/like`, {
+            const res = await fetch(`${API_URL}/api/replies/${replyId}/like`, {
                 method: "POST", credentials: "include"
             });
             const data = await res.json();
@@ -195,7 +194,7 @@ const ReviewDetail = ({ review, onBack, userId, onNeedLogin, contentImage, conte
         if (!replyText.trim()) return;
         setSubmitting(true);
         try {
-            const res = await fetch(`${API}/api/replies/create`, {
+            const res = await fetch(`${API_URL}/api/replies/create`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -352,7 +351,7 @@ const AllReviews = () => {
     const [loginPrompt, setLoginPrompt] = useState(null);
 
     useEffect(() => {
-        fetch(`${API}/api/auth/me`, { credentials: "include" })
+        fetch(`${API_URL}/api/auth/me`, { credentials: "include" })
             .then(r => r.json())
             .then(d => { if (d.success && d.user) setUserId(d.user._id); })
             .catch(() => { });
@@ -372,8 +371,8 @@ const AllReviews = () => {
         try {
             setIsLoading(true);
             const endpoint = contentType === "album"
-                ? `${API}/api/reviews/album/${contentId}`
-                : `${API}/api/reviews/artist/${contentId}`;
+                ? `${API_URL}/api/reviews/album/${contentId}`
+                : `${API_URL}/api/reviews/artist/${contentId}`;
 
             const res = await fetch(endpoint, { credentials: "include" });
             const data = await res.json();

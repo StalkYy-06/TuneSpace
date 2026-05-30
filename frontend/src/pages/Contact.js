@@ -4,8 +4,7 @@ import Navbar from "../components/Navbar";
 import BottomBar from "../components/BottomBar";
 import "../styles/contact.css";
 import axios from "axios";
-
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+import { API_URL } from "../config/api";
 
 export default function Contact() {
     const [formData, setFormData] = useState({
@@ -30,11 +29,7 @@ export default function Contact() {
         setStatus({ type: "", message: "" });
 
         try {
-            // Simulate API call - replace with actual endpoint when ready
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
-            // TODO: Replace with actual API call
-            // await axios.post(`${API_URL}/api/contact`, formData);
+            await axios.post(`${API_URL}/api/contact`, formData);
 
             setStatus({
                 type: "success",

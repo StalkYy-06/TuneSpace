@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_URL } from "../config/api";
 import "../styles/navbar.css";
 
 export default function Navbar() {
@@ -13,7 +14,7 @@ export default function Navbar() {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const res = await axios.get("http://localhost:5000/api/auth/me", {
+                const res = await axios.get(`${API_URL}/api/auth/me`, {
                     withCredentials: true,
                 });
                 if (res.data.success) {
@@ -28,7 +29,7 @@ export default function Navbar() {
 
         const checkAdminAuth = async () => {
             try {
-                const response = await fetch("http://localhost:5000/api/admin/auth/check", {
+                const response = await fetch(`${API_URL}/api/admin/auth/check`, {
                     credentials: "include"
                 });
                 const data = await response.json();
@@ -36,7 +37,6 @@ export default function Navbar() {
                     setIsAdmin(true);
                 }
             } catch (err) {
-                // Not admin, ignore error
                 setIsAdmin(false);
             }
         };
@@ -47,17 +47,15 @@ export default function Navbar() {
 
     const handleLogout = async () => {
         try {
-            // Logout from admin if logged in as admin
             if (isAdmin) {
-                await fetch("http://localhost:5000/api/admin/auth/logout", {
+                await fetch(`${API_URL}/api/admin/auth/logout`, {
                     method: "POST",
                     credentials: "include"
                 });
                 setIsAdmin(false);
             }
 
-            // Logout from regular user account
-            await axios.post("http://localhost:5000/api/auth/logout", {}, { withCredentials: true });
+            await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
             setUser(null);
             navigate("/");
         } catch (err) {
@@ -75,20 +73,20 @@ export default function Navbar() {
     };
 
     if (loading) {
-        return null; // or a skeleton loader
+        return null;
     }
 
     return (
         <nav className="navbar">
             <div className="nav-container">
-                <Link to="/" className="nav-logo">
+                <Link to="/home" className="nav-logo">
                     <span>TuneSpace</span>
                 </Link>
 
                 <div className="right-group">
                     <ul className="nav-menu">
                         <li className="nav-item">
-                            <Link to="/" className="nav-link">Home</Link>
+                            <Link to="/home" className="nav-link">Home</Link>
                         </li>
                         <li className="nav-item">
                             <Link to="/search" className="nav-link">Search</Link>
@@ -101,16 +99,14 @@ export default function Navbar() {
                     <div className="auth-section">
                         {user ? (
                             <a href="/profile" className="profile-btn" onClick={handleProfileClick}>
-                                {/* Profile Picture Circle */}
                                 <div className="profile-pic-container">
                                     {user.profilePicture ? (
                                         <img
-                                            src={`http://localhost:5000${user.profilePicture}`}
+                                            src={`${API_URL}${user.profilePicture}`}
                                             alt={user.username}
                                             className="profile-pic"
                                             onError={(e) => {
-                                                e.target.src = "/default-avatar.png";
-                                                e.target.onerror = null;
+                                                e.target.style.display = "none";
                                             }}
                                         />
                                     ) : (

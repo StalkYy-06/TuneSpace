@@ -6,7 +6,7 @@ import InputField from "../components/InputField";
 import GoogleIcon from "../icons/google.png";
 import OtpVerification from "./OtpVerification";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+import { API_URL } from "../config/api";
 
 export default function Register() {
     const [form, setForm] = useState({
@@ -43,7 +43,7 @@ export default function Register() {
     };
 
     const handleOtpVerified = async () => {
-        navigate("/");
+        navigate("/home");
     };
 
     // Handle Google OAuth registration

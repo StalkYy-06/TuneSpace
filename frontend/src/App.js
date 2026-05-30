@@ -3,6 +3,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
+import LandingPage from "./pages/LandingPage";
 import Profile from "./pages/Profile";
 import AlbumDetail from "./pages/AlbumDetail";
 import ArtistDetail from "./pages/ArtistDetail";
@@ -16,16 +17,20 @@ import AllReviews from "./pages/AllReviews";
 import UserProfile from "./pages/UserProfile";
 import Leaderboard from "./pages/Leaderboard";
 import Search from "./pages/Search";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<LandingPage />} />
+
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/profile" element={<Profile />} />
+
+        <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/album/:id" element={<AlbumDetail />} />
         <Route path="/artist/:id" element={<ArtistDetail />} />
         <Route path="/reviews/:contentType/:contentId" element={<AllReviews />} />

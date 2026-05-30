@@ -4,8 +4,7 @@ import axios from "axios";
 import Navbar from "../components/Navbar";
 import BottomBar from "../components/BottomBar";
 import "../styles/profile.css";
-
-const API_URL = "http://localhost:5000";
+import { API_URL } from "../config/api";
 
 // ─── Activity helpers ────────────────────────────────────────────────
 function timeAgo(dateStr) {
@@ -20,15 +19,17 @@ function timeAgo(dateStr) {
     return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function ActivityAvatar({ username, picture, API_URL, size = 36 }) {
-    if (picture) {
+function ActivityAvatar({ username, picture, size = 36 }) {
+    const [imgFailed, setImgFailed] = useState(false);
+
+    if (picture && !imgFailed) {
         return (
             <img
                 src={`${API_URL}${picture}`}
                 alt={username}
                 className="act-avatar-img"
                 style={{ width: size, height: size }}
-                onError={e => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }}
+                onError={() => setImgFailed(true)}
             />
         );
     }
@@ -39,7 +40,7 @@ function ActivityAvatar({ username, picture, API_URL, size = 36 }) {
     );
 }
 
-function ActivityItem({ activity, navigate, API_URL }) {
+function ActivityItem({ activity, navigate }) {
     const { type, timestamp } = activity;
     const ago = timeAgo(timestamp);
 
@@ -85,7 +86,6 @@ function ActivityItem({ activity, navigate, API_URL }) {
                     <ActivityAvatar
                         username={activity.targetUsername}
                         picture={activity.targetProfilePicture}
-                        API_URL={API_URL}
                         size={36}
                     />
                 </div>
@@ -111,7 +111,6 @@ function ActivityItem({ activity, navigate, API_URL }) {
                     <ActivityAvatar
                         username={activity.fromUsername}
                         picture={activity.fromProfilePicture}
-                        API_URL={API_URL}
                         size={36}
                     />
                 </div>
@@ -232,6 +231,8 @@ export default function Profile() {
     const [activityLoading, setActivityLoading] = useState(false);
     const [favouriteAlbums, setFavouriteAlbums] = useState([]);
     const [favouritesLoading, setFavouritesLoading] = useState(false);
+    const [sharedPosts, setSharedPosts] = useState([]);
+    const [shareLoadingMap, setShareLoadingMap] = useState({});
 
     const [formData, setFormData] = useState({ username: "", bio: "" });
     const [errors, setErrors] = useState({});
@@ -286,12 +287,71 @@ export default function Profile() {
                     setReviews(profileRes.data.reviews || []);
                     setStats(profileRes.data.stats || null);
                 }
+
+                await fetchSharedReviews(res.data.user._id);
             }
         } catch (err) {
             console.error("Failed to fetch profile:", err);
             if (err.response?.status === 401) navigate("/login");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchSharedReviews = async (userId) => {
+        try {
+            const res = await axios.get(`${API_URL}/api/feed/user/${userId}`, { withCredentials: true });
+            if (res.data.success) {
+                setSharedPosts(res.data.posts || []);
+            }
+        } catch (err) {
+            console.error("Failed to fetch shared reviews:", err);
+        }
+    };
+
+    const isReviewShared = (reviewId) =>
+        sharedPosts.some((post) => post.reviewId?.toString() === reviewId?.toString());
+
+    const handleShareReview = async (review) => {
+        setShareLoadingMap((prev) => ({ ...prev, [review._id]: true }));
+        try {
+            const res = await axios.post(`${API_URL}/api/feed/share`, {
+                reviewId: review._id,
+                contentType: review.contentType,
+                contentId: review.contentId,
+                contentName: review.contentName,
+                artistName: review.artistName || "",
+                coverUrl: review.contentImage || "",
+                rating: review.rating,
+                reviewText: review.reviewText || ""
+            }, { withCredentials: true });
+            if (res.data.success) {
+                await fetchSharedReviews(user._id);
+            } else {
+                alert(res.data.message || "Failed to share review");
+            }
+        } catch (err) {
+            alert(err.response?.data?.message || "Failed to share review");
+        } finally {
+            setShareLoadingMap((prev) => ({ ...prev, [review._id]: false }));
+        }
+    };
+
+    const handleUnshareReview = async (reviewId) => {
+        const post = sharedPosts.find((p) => p.reviewId?.toString() === reviewId?.toString());
+        if (!post) return;
+        setShareLoadingMap((prev) => ({ ...prev, [reviewId]: true }));
+        try {
+            const res = await axios.delete(`${API_URL}/api/feed/${post._id}`, { withCredentials: true });
+            if (res.data.success) {
+                await fetchSharedReviews(user._id);
+            } else {
+                alert(res.data.message || "Failed to unshare review");
+            }
+        } catch (err) {
+            alert(err.response?.data?.message || "Failed to unshare review");
+        } finally {
+            setShareLoadingMap((prev) => ({ ...prev, [reviewId]: false }));
         }
     };
 
@@ -566,6 +626,12 @@ export default function Profile() {
                             >
                                 Activity
                             </button>
+                            <button
+                                className={`tab-btn ${activeTab === "shared" ? "active" : ""}`}
+                                onClick={() => setActiveTab("shared")}
+                            >
+                                Shared Reviews ({sharedPosts.length})
+                            </button>
                         </div>
 
                         <div className="tab-content">
@@ -600,6 +666,34 @@ export default function Profile() {
                                                             className="delete-review-btn"
                                                         >
                                                             Delete
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                if (isReviewShared(review._id)) {
+                                                                    handleUnshareReview(review._id);
+                                                                } else {
+                                                                    handleShareReview(review);
+                                                                }
+                                                            }}
+                                                            className="share-review-btn"
+                                                            style={{
+                                                                marginLeft: 10,
+                                                                background: isReviewShared(review._id) ? "#2c2c2c" : "#1db954",
+                                                                border: "none",
+                                                                borderRadius: 6,
+                                                                padding: "6px 12px",
+                                                                color: "#fff",
+                                                                cursor: "pointer",
+                                                                fontSize: "0.8rem"
+                                                            }}
+                                                            disabled={!!shareLoadingMap[review._id]}
+                                                        >
+                                                            {shareLoadingMap[review._id]
+                                                                ? "..."
+                                                                : isReviewShared(review._id)
+                                                                    ? "Unshare"
+                                                                    : "Share"}
                                                         </button>
                                                     </div>
 
@@ -648,8 +742,65 @@ export default function Profile() {
                                                     key={idx}
                                                     activity={act}
                                                     navigate={navigate}
-                                                    API_URL={API_URL}
                                                 />
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {activeTab === "shared" && (
+                                <div className="reviews-tab">
+                                    {sharedPosts.length === 0 ? (
+                                        <div className="no-content-state">
+                                            <div className="no-content-icon">📣</div>
+                                            <h3>No Shared Reviews Yet</h3>
+                                            <p>Share one of your reviews from the My Reviews tab.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="reviews-list-profile">
+                                            {sharedPosts.map((post) => (
+                                                <div
+                                                    key={post._id}
+                                                    className="review-item"
+                                                    style={{ cursor: "pointer" }}
+                                                    onClick={() => navigate(`/reviews/${post.contentType || "album"}/${post.contentId}`, { state: { reviewId: post.reviewId } })}
+                                                >
+                                                    <div className="review-item-header">
+                                                        <div className="review-album-info" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                                            {post.coverUrl && (
+                                                                <img src={post.coverUrl} alt={post.contentName}
+                                                                    style={{ width: 44, height: 44, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
+                                                            )}
+                                                            <div>
+                                                                <div className="review-album-title">{post.contentName}</div>
+                                                                <div style={{ fontSize: "0.78rem", color: "#888", textTransform: "capitalize" }}>{post.contentType || "album"}</div>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleUnshareReview(post.reviewId); }}
+                                                            className="delete-review-btn"
+                                                            disabled={!!shareLoadingMap[post.reviewId]}
+                                                        >
+                                                            {shareLoadingMap[post.reviewId] ? "..." : "Unshare"}
+                                                        </button>
+                                                    </div>
+
+                                                    <div className="review-rating">
+                                                        {[...Array(5)].map((_, i) => (
+                                                            <span key={i} style={{ color: i < post.rating ? "#ffc107" : "#444" }}>★</span>
+                                                        ))}
+                                                        <span style={{ fontSize: "0.8rem", color: "#888", marginLeft: 8 }}>{post.rating}/5</span>
+                                                    </div>
+
+                                                    <p className="review-text">{post.reviewText || "(No review text)"}</p>
+                                                    <div className="review-meta">
+                                                        <span className="review-date">
+                                                            Shared {new Date(post.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                                                        </span>
+                                                        <span className="review-likes">❤️ {post.likes || 0}</span>
+                                                    </div>
+                                                </div>
                                             ))}
                                         </div>
                                     )}

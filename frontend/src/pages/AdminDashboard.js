@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import ModerationModal from "../components/ModerationModal";
+import { API_URL } from "../config/api";
 import "../styles/adminDashboard.css";
 
 const AdminDashboard = () => {
@@ -14,6 +16,8 @@ const AdminDashboard = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedUser, setSelectedUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [moderationReport, setModerationReport] = useState(null);
+    const [showModerationModal, setShowModerationModal] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -33,7 +37,7 @@ const AdminDashboard = () => {
 
     const checkAdminAuth = async () => {
         try {
-            const response = await fetch("http://localhost:5000/api/admin/auth/check", {
+            const response = await fetch(`${API_URL}/api/admin/auth/check`, {
                 credentials: "include"
             });
             const data = await response.json();
@@ -52,7 +56,7 @@ const AdminDashboard = () => {
 
     const fetchDashboardStats = async () => {
         try {
-            const response = await fetch("http://localhost:5000/api/admin/dashboard/stats", {
+            const response = await fetch(`${API_URL}/api/admin/dashboard/stats`, {
                 credentials: "include"
             });
             const data = await response.json();
@@ -66,7 +70,7 @@ const AdminDashboard = () => {
 
     const fetchReportedReviews = async () => {
         try {
-            const response = await fetch("http://localhost:5000/api/admin/dashboard/reports/reviews", {
+            const response = await fetch(`${API_URL}/api/admin/dashboard/reports/reviews`, {
                 credentials: "include"
             });
             const data = await response.json();
@@ -80,7 +84,7 @@ const AdminDashboard = () => {
 
     const fetchReportedUsers = async () => {
         try {
-            const response = await fetch("http://localhost:5000/api/admin/dashboard/users/reported/list", {
+            const response = await fetch(`${API_URL}/api/admin/dashboard/users/reported/list`, {
                 credentials: "include"
             });
             const data = await response.json();
@@ -94,7 +98,7 @@ const AdminDashboard = () => {
 
     const fetchBannedUsers = async () => {
         try {
-            const response = await fetch("http://localhost:5000/api/admin/dashboard/users/banned/list", {
+            const response = await fetch(`${API_URL}/api/admin/dashboard/users/banned/list`, {
                 credentials: "include"
             });
             const data = await response.json();
@@ -112,7 +116,7 @@ const AdminDashboard = () => {
 
         try {
             const response = await fetch(
-                `http://localhost:5000/api/admin/dashboard/users/search?query=${encodeURIComponent(searchQuery)}`,
+                `${API_URL}/api/admin/dashboard/users/search?query=${encodeURIComponent(searchQuery)}`,
                 { credentials: "include" }
             );
             const data = await response.json();
@@ -124,10 +128,33 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleModerationAction = async (reportId, actionData) => {
+        try {
+            const response = await fetch(`${API_URL}/api/admin/moderation/reports/${reportId}/action`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify(actionData)
+            });
+            const data = await response.json();
+            if (data.success) {
+                alert(data.message || "Action completed");
+                fetchReportedReviews();
+                fetchReportedUsers();
+                fetchDashboardStats();
+            } else {
+                alert(data.message || "Moderation action failed");
+            }
+        } catch (err) {
+            console.error("Moderation action error:", err);
+            alert("Moderation action failed");
+        }
+    };
+
     const handleUpdateReportStatus = async (reportId, newStatus) => {
         try {
             const response = await fetch(
-                `http://localhost:5000/api/admin/dashboard/reports/${reportId}/status`,
+                `${API_URL}/api/admin/dashboard/reports/${reportId}/status`,
                 {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
@@ -151,7 +178,7 @@ const AdminDashboard = () => {
 
         try {
             const response = await fetch(
-                `http://localhost:5000/api/admin/dashboard/reviews/${reviewId}`,
+                `${API_URL}/api/admin/dashboard/reviews/${reviewId}`,
                 {
                     method: "DELETE",
                     credentials: "include"
@@ -192,7 +219,7 @@ const AdminDashboard = () => {
 
         try {
             const response = await fetch(
-                `http://localhost:5000/api/admin/dashboard/users/${userId}/ban`,
+                `${API_URL}/api/admin/dashboard/users/${userId}/ban`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -224,7 +251,7 @@ const AdminDashboard = () => {
 
         try {
             const response = await fetch(
-                `http://localhost:5000/api/admin/dashboard/users/${userId}/unban`,
+                `${API_URL}/api/admin/dashboard/users/${userId}/unban`,
                 {
                     method: "POST",
                     credentials: "include"
@@ -246,7 +273,7 @@ const AdminDashboard = () => {
     const handleViewReportedUserDetails = async (username) => {
         try {
             const response = await fetch(
-                `http://localhost:5000/api/admin/dashboard/users/reported/${encodeURIComponent(username)}`,
+                `${API_URL}/api/admin/dashboard/users/reported/${encodeURIComponent(username)}`,
                 { credentials: "include" }
             );
             const data = await response.json();
@@ -261,7 +288,7 @@ const AdminDashboard = () => {
     const handleViewUserDetails = async (userId) => {
         try {
             const response = await fetch(
-                `http://localhost:5000/api/admin/dashboard/users/${userId}`,
+                `${API_URL}/api/admin/dashboard/users/${userId}`,
                 { credentials: "include" }
             );
             const data = await response.json();
@@ -275,7 +302,7 @@ const AdminDashboard = () => {
 
     const handleLogout = async () => {
         try {
-            await fetch("http://localhost:5000/api/admin/auth/logout", {
+            await fetch(`${API_URL}/api/admin/auth/logout`, {
                 method: "POST",
                 credentials: "include"
             });
@@ -312,14 +339,14 @@ const AdminDashboard = () => {
                         className={`admin-nav-item ${activeSection === "overview" ? "active" : ""}`}
                         onClick={() => setActiveSection("overview")}
                     >
-                        <span className="nav-icon">📊</span>
+                        <span className="nav-icon"></span>
                         <span className="nav-text">Overview</span>
                     </button>
                     <button
                         className={`admin-nav-item ${activeSection === "reported-reviews" ? "active" : ""}`}
                         onClick={() => setActiveSection("reported-reviews")}
                     >
-                        <span className="nav-icon">🚩</span>
+                        <span className="nav-icon"></span>
                         <span className="nav-text">Reported Reviews</span>
                         {stats?.pendingReports > 0 && (
                             <span className="nav-badge">{stats.pendingReports}</span>
@@ -329,7 +356,7 @@ const AdminDashboard = () => {
                         className={`admin-nav-item ${activeSection === "reported-users" ? "active" : ""}`}
                         onClick={() => setActiveSection("reported-users")}
                     >
-                        <span className="nav-icon">⚠️</span>
+                        <span className="nav-icon"></span>
                         <span className="nav-text">Reported Users</span>
                         {stats?.totalReportedUsers > 0 && (
                             <span className="nav-badge">{stats.totalReportedUsers}</span>
@@ -339,7 +366,7 @@ const AdminDashboard = () => {
                         className={`admin-nav-item ${activeSection === "banned-users" ? "active" : ""}`}
                         onClick={() => setActiveSection("banned-users")}
                     >
-                        <span className="nav-icon">🚫</span>
+                        <span className="nav-icon"></span>
                         <span className="nav-text">Banned Users</span>
                         {stats?.bannedUsers > 0 && (
                             <span className="nav-badge">{stats.bannedUsers}</span>
@@ -349,14 +376,14 @@ const AdminDashboard = () => {
                         className={`admin-nav-item ${activeSection === "search-users" ? "active" : ""}`}
                         onClick={() => setActiveSection("search-users")}
                     >
-                        <span className="nav-icon">🔍</span>
+                        <span className="nav-icon"></span>
                         <span className="nav-text">Search Users</span>
                     </button>
                 </nav>
 
                 <div className="admin-sidebar-footer">
                     <button className="admin-logout-btn" onClick={handleLogout}>
-                        <span className="nav-icon">🚪</span>
+                        <span className="nav-icon"></span>
                         <span className="nav-text">Logout</span>
                     </button>
                 </div>
@@ -378,6 +405,10 @@ const AdminDashboard = () => {
                             reports={reports}
                             onUpdateStatus={handleUpdateReportStatus}
                             onDeleteReview={handleDeleteReview}
+                            onModerate={(report) => {
+                                setModerationReport(report);
+                                setShowModerationModal(true);
+                            }}
                         />
                     )}
 
@@ -414,6 +445,16 @@ const AdminDashboard = () => {
                     )}
                 </div>
             </main>
+
+            <ModerationModal
+                isOpen={showModerationModal}
+                onClose={() => {
+                    setShowModerationModal(false);
+                    setModerationReport(null);
+                }}
+                report={moderationReport}
+                onAction={handleModerationAction}
+            />
         </div>
     );
 };
@@ -480,11 +521,11 @@ const OverviewSection = ({ stats }) => (
 // ============================================
 // FIXED: Reported Reviews Section Component
 // ============================================
-const ReportedReviewsSection = ({ reports, onUpdateStatus, onDeleteReview }) => (
+const ReportedReviewsSection = ({ reports, onUpdateStatus, onDeleteReview, onModerate }) => (
     <div className="reported-reviews-container">
         {reports.length === 0 ? (
             <div className="empty-state">
-                <div className="empty-icon">✅</div>
+                <div className="empty-icon"></div>
                 <h3>No Reported Reviews</h3>
                 <p>All clear! There are no reported reviews at the moment.</p>
             </div>
@@ -548,6 +589,12 @@ const ReportedReviewsSection = ({ reports, onUpdateStatus, onDeleteReview }) => 
                                 <option value="dismissed">Dismissed</option>
                                 <option value="invalid">Invalid</option>
                             </select>
+                            <button
+                                className="delete-review-btn"
+                                onClick={() => onModerate(report)}
+                            >
+                                Moderate
+                            </button>
                             <button
                                 className="delete-review-btn"
                                 onClick={() => onDeleteReview(report.reviewId)}
@@ -641,7 +688,7 @@ const ReportedUsersSection = ({ reportedUsers, selectedUser, onViewDetails, onBa
         <div className="reported-users-container">
             {reportedUsers.length === 0 ? (
                 <div className="empty-state">
-                    <div className="empty-icon">✅</div>
+                    <div className="empty-icon"></div>
                     <h3>No Reported Users</h3>
                     <p>No users have been reported yet.</p>
                 </div>
@@ -685,7 +732,7 @@ const BannedUsersSection = ({ bannedUsers, onUnbanUser }) => (
     <div className="banned-users-container">
         {bannedUsers.length === 0 ? (
             <div className="empty-state">
-                <div className="empty-icon">✅</div>
+                <div className="empty-icon"></div>
                 <h3>No Banned Users</h3>
                 <p>No users are currently banned.</p>
             </div>

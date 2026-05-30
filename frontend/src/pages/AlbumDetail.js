@@ -5,8 +5,7 @@ import BottomBar from "../components/BottomBar";
 import ReviewModal from "../components/ReviewModal";
 import ReportModal from "../components/ReportModal";
 import "../styles/albumDetail.css";
-
-const API = "http://localhost:5000";
+import { API_URL } from "../config/api";
 
 export default function AlbumDetail() {
     // id = encoded lastfm_key e.g. "frank%20ocean||blonde"
@@ -31,20 +30,39 @@ export default function AlbumDetail() {
 
     const [favouritedCount, setFavouritedCount] = useState(0);
     const [hasFavourited, setHasFavourited] = useState(false);
+    const [hasListened, setHasListened] = useState(false);
 
     useEffect(() => {
-        window.scrollTo(0, 0);
-        checkAuth();
-        fetchAlbum();
-        fetchReviews();
-        fetchFavouriteCount();
+        const loadPage = async () => {
+            window.scrollTo(0, 0);
+            let uid = null;
+            try {
+                const res = await fetch(`${API_URL}/api/auth/me`, { credentials: "include" });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && data.user) {
+                        uid = data.user._id;
+                        setUserId(uid);
+                    }
+                }
+            } catch { /* not logged in */ }
+
+            await fetchAlbum();
+            fetchFavouriteCount();
+            await fetchReviews(uid);
+            if (uid) {
+                checkFavouriteStatus();
+                checkListenedStatus();
+            }
+        };
+        loadPage();
     }, [id]);
 
     const fetchAlbum = async () => {
         setLoading(true);
         setError(null);
         try {
-            const res = await fetch(`${API}/api/music/album/${id}`);
+            const res = await fetch(`${API_URL}/api/music/album/${id}`);
             const data = await res.json();
             if (data.success) setAlbum(data.album);
             else setError("Album not found.");
@@ -55,22 +73,10 @@ export default function AlbumDetail() {
         }
     };
 
-    const checkAuth = async () => {
-        try {
-            const res = await fetch(`${API}/api/auth/me`, { credentials: "include" });
-            if (res.ok) {
-                const data = await res.json();
-                if (data.success && data.user) {
-                    setUserId(data.user._id);
-                    checkFavouriteStatus();
-                }
-            }
-        } catch { /* not logged in */ }
-    };
 
     const fetchFavouriteCount = async () => {
         try {
-            const res = await fetch(`${API}/api/favourites/count/${id}`);
+            const res = await fetch(`${API_URL}/api/favourites/count/${id}`);
             const data = await res.json();
             if (data.success) setFavouritedCount(data.count);
         } catch { /* ignore */ }
@@ -78,27 +84,35 @@ export default function AlbumDetail() {
 
     const checkFavouriteStatus = async () => {
         try {
-            const res = await fetch(`${API}/api/favourites/check/${id}`, { credentials: "include" });
+            const res = await fetch(`${API_URL}/api/favourites/check/${id}`, { credentials: "include" });
             const data = await res.json();
             if (data.success) setHasFavourited(data.isFavourited);
         } catch { /* ignore */ }
     };
 
-    const fetchReviews = async () => {
+    const checkListenedStatus = async () => {
         try {
-            const res = await fetch(`${API}/api/reviews/album/${id}`);
+            const res = await fetch(`${API_URL}/api/listened/check/${id}`, { credentials: "include" });
+            const data = await res.json();
+            if (data.success) setHasListened(data.isListened);
+        } catch { /* ignore */ }
+    };
+
+    const fetchReviews = async (uid = userId) => {
+        try {
+            const res = await fetch(`${API_URL}/api/reviews/album/${id}`);
             const data = await res.json();
             if (data.success) {
                 setReviews(data.reviews);
                 setAverageRating(data.averageRating);
                 const liked = {};
                 data.reviews.forEach(r => {
-                    if (userId && r.likedBy?.includes(userId)) liked[r._id] = true;
+                    if (uid && r.likedBy?.some(lid => String(lid) === String(uid))) liked[r._id] = true;
                 });
                 setLikedReviews(liked);
             }
             try {
-                const ur = await fetch(`${API}/api/reviews/album/${id}/user`, { credentials: "include" });
+                const ur = await fetch(`${API_URL}/api/reviews/album/${id}/user`, { credentials: "include" });
                 const ud = await ur.json();
                 if (ud.success && ud.review) setUserReview(ud.review);
             } catch { /* not logged in */ }
@@ -111,7 +125,7 @@ export default function AlbumDetail() {
 
     const fetchReplyCount = async (reviewId) => {
         try {
-            const res = await fetch(`${API}/api/replies/review/${reviewId}/count`, { credentials: "include" });
+            const res = await fetch(`${API_URL}/api/replies/review/${reviewId}/count`, { credentials: "include" });
             const data = await res.json();
             if (data.success) setReplyCounts(prev => ({ ...prev, [reviewId]: data.count }));
         } catch { /* ignore */ }
@@ -131,7 +145,7 @@ export default function AlbumDetail() {
     const handleLikeReview = async (reviewId) => {
         if (!userId) { setShowLoginModal(true); return; }
         try {
-            const res = await fetch(`${API}/api/reviews/${reviewId}/like`, { method: "POST", credentials: "include" });
+            const res = await fetch(`${API_URL}/api/reviews/${reviewId}/like`, { method: "POST", credentials: "include" });
             const data = await res.json();
             if (data.success) {
                 setReviews(prev => prev.map(r => r._id === reviewId ? { ...r, likes: data.likes } : r));
@@ -145,10 +159,31 @@ export default function AlbumDetail() {
         setIsReportModalOpen(true);
     };
 
+    const toggleListened = async () => {
+        if (!userId) { setShowLoginModal(true); return; }
+        try {
+            const res = await fetch(`${API_URL}/api/listened/toggle`, {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    albumId: id,
+                    albumName: album?.title || "Unknown",
+                    artistName: album?.artist || "Unknown",
+                    coverImage: album?.cover_url || null,
+                }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setHasListened(data.isListened);
+            } else if (res.status === 401) setShowLoginModal(true);
+        } catch { /* ignore */ }
+    };
+
     const toggleFavourite = async () => {
         if (!userId) { setShowLoginModal(true); return; }
         try {
-            const res = await fetch(`${API}/api/favourites/toggle`, {
+            const res = await fetch(`${API_URL}/api/favourites/toggle`, {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
@@ -326,6 +361,10 @@ export default function AlbumDetail() {
                         </div>
                         <div className="interaction-right">
                             <div className="action-list">
+                                <div className={`action-list-item ${hasListened ? "active" : ""}`} onClick={toggleListened}>
+                                    <span className="action-icon">{hasListened ? "👂" : "👂"}</span>
+                                    {hasListened ? "Listened" : "Mark Listened"}
+                                </div>
                                 <div className={`action-list-item ${hasFavourited ? "active" : ""}`} onClick={toggleFavourite}>
                                     <span className="action-icon">{hasFavourited ? "♥" : "♡"}</span>
                                     {hasFavourited ? "Favourited" : "Favourite"}

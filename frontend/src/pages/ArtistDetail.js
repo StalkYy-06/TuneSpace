@@ -4,8 +4,7 @@ import Navbar from "../components/Navbar";
 import BottomBar from "../components/BottomBar";
 import ReviewModal from "../components/ReviewModal";
 import "../styles/artistDetail.css";
-
-const API = "http://localhost:5000";
+import { API_URL } from "../config/api";
 
 export default function ArtistDetail() {
     // id = encoded artist name e.g. "radiohead"
@@ -34,7 +33,7 @@ export default function ArtistDetail() {
         setLoading(true);
         setError(null);
         try {
-            const res = await fetch(`${API}/api/music/artist/${id}`);
+            const res = await fetch(`${API_URL}/api/music/artist/${id}`);
             const data = await res.json();
             if (data.success) setArtist(data.artist);
             else setError("Artist not found.");
@@ -44,7 +43,7 @@ export default function ArtistDetail() {
 
     const checkAuth = async () => {
         try {
-            const res = await fetch(`${API}/api/auth/me`, { credentials: "include" });
+            const res = await fetch(`${API_URL}/api/auth/me`, { credentials: "include" });
             if (res.ok) {
                 const data = await res.json();
                 if (data.success && data.user) setUserId(data.user._id);
@@ -54,11 +53,11 @@ export default function ArtistDetail() {
 
     const fetchReviews = async () => {
         try {
-            const res = await fetch(`${API}/api/reviews/artist/${id}`);
+            const res = await fetch(`${API_URL}/api/reviews/artist/${id}`);
             const data = await res.json();
             if (data.success) { setReviews(data.reviews); setAverageRating(data.averageRating); }
             try {
-                const ur = await fetch(`${API}/api/reviews/artist/${id}/user`, { credentials: "include" });
+                const ur = await fetch(`${API_URL}/api/reviews/artist/${id}/user`, { credentials: "include" });
                 const ud = await ur.json();
                 if (ud.success && ud.review) setUserReview(ud.review);
             } catch { /* not logged in */ }
@@ -71,7 +70,7 @@ export default function ArtistDetail() {
 
     const fetchReplyCount = async (reviewId) => {
         try {
-            const res = await fetch(`${API}/api/replies/review/${reviewId}/count`, { credentials: "include" });
+            const res = await fetch(`${API_URL}/api/replies/review/${reviewId}/count`, { credentials: "include" });
             const data = await res.json();
             if (data.success) setReplyCounts(prev => ({ ...prev, [reviewId]: data.count }));
         } catch { /* ignore */ }
@@ -84,7 +83,7 @@ export default function ArtistDetail() {
 
     const handleLikeReview = async (reviewId) => {
         try {
-            const res = await fetch(`${API}/api/reviews/${reviewId}/like`, { method: "POST", credentials: "include" });
+            const res = await fetch(`${API_URL}/api/reviews/${reviewId}/like`, { method: "POST", credentials: "include" });
             const data = await res.json();
             if (data.success) {
                 setReviews(prev => prev.map(r => r._id === reviewId ? { ...r, likes: data.likes } : r));

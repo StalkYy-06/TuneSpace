@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import BottomBar from "../components/BottomBar";
 import "../styles/userProfile.css";
+import { API_URL } from "../config/api";
 
 /* Reusable login prompt modal - same style as AllReviews */
 const LoginPromptModal = ({ isOpen, onClose, navigate }) => {
@@ -23,8 +24,6 @@ const LoginPromptModal = ({ isOpen, onClose, navigate }) => {
     );
 };
 
-const API_URL = "http://localhost:5000";
-
 const UserProfile = () => {
     const { username } = useParams();
     const navigate = useNavigate();
@@ -33,9 +32,9 @@ const UserProfile = () => {
     const [isFollowing, setIsFollowing] = useState(false);
     const [followersCount, setFollowersCount] = useState(0);
     const [currentUserId, setCurrentUserId] = useState(null);
-    const [activeTab, setActiveTab] = useState("reviews");
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [favouriteAlbums, setFavouriteAlbums] = useState([]);
+    const [sharedPosts, setSharedPosts] = useState([]);
 
     useEffect(() => {
         checkAuth();
@@ -73,6 +72,7 @@ const UserProfile = () => {
                 // Fetch favourite albums for this user
                 if (data.user?._id) {
                     fetchFavourites(data.user._id);
+                    fetchSharedReviews(data.user._id);
                 }
             } else {
                 console.error("Profile not found");
@@ -81,6 +81,20 @@ const UserProfile = () => {
             console.error("Error fetching profile:", err);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const fetchSharedReviews = async (userId) => {
+        try {
+            const response = await fetch(`${API_URL}/api/feed/user/${userId}`, {
+                credentials: "include"
+            });
+            const data = await response.json();
+            if (data.success) {
+                setSharedPosts(data.posts || []);
+            }
+        } catch (err) {
+            console.error("Error fetching shared reviews:", err);
         }
     };
 
@@ -381,6 +395,70 @@ const UserProfile = () => {
                                             <div className="up-review-actions">
                                                 <span className="up-review-stat">❤️ {review.likes || 0}</span>
                                                 <span className="up-review-stat">↩ Reply</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Shared Reviews Section */}
+                    <div className="up-reviews-section">
+                        <h2 className="up-section-title">
+                            Shared Reviews ({sharedPosts.length})
+                        </h2>
+                        {sharedPosts.length === 0 ? (
+                            <div className="up-no-reviews">
+                                <div className="up-no-reviews-icon">📣</div>
+                                <h3>No Shared Reviews Yet</h3>
+                                <p>{user.username} hasn't shared any reviews to the feed yet.</p>
+                            </div>
+                        ) : (
+                            <div className="up-reviews-list">
+                                {sharedPosts.map((post) => (
+                                    <div
+                                        key={post._id}
+                                        className="up-review-card"
+                                        onClick={() => navigate(`/reviews/${post.contentType || "album"}/${post.contentId}`, { state: { reviewId: post.reviewId } })}
+                                    >
+                                        <div className="up-review-album-row">
+                                            {post.coverUrl && (
+                                                <img
+                                                    src={post.coverUrl}
+                                                    alt={post.contentName}
+                                                    className="up-review-album-img"
+                                                />
+                                            )}
+                                            <div className="up-review-album-info">
+                                                <div className="up-review-album-name">{post.contentName}</div>
+                                                <div className="up-review-type">{post.contentType || "album"}</div>
+                                            </div>
+                                            <div className="up-review-date-top">
+                                                {new Date(post.createdAt).toLocaleDateString("en-US", {
+                                                    year: "numeric", month: "short", day: "numeric"
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        <div className="up-review-stars">
+                                            {[...Array(5)].map((_, i) => (
+                                                <span
+                                                    key={i}
+                                                    className={i < post.rating ? "rc-star filled" : "rc-star"}
+                                                >★</span>
+                                            ))}
+                                            <span className="rc-star-num">{post.rating}/5</span>
+                                        </div>
+
+                                        <p className="up-review-text">
+                                            {post.reviewText || "(No review text)"}
+                                        </p>
+
+                                        <div className="up-review-footer">
+                                            <div className="up-review-actions">
+                                                <span className="up-review-stat">❤️ {post.likes || 0}</span>
+                                                <span className="up-review-stat">Shared to feed</span>
                                             </div>
                                         </div>
                                     </div>

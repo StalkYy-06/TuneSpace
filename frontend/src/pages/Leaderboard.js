@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import BottomBar from "../components/BottomBar";
 import "../styles/leaderboard.css";
-
-const API = "http://localhost:5000";
+import { API_URL } from "../config/api";
 
 const PERIODS = [
     { value: "weekly", label: "This Week" },
@@ -48,7 +47,7 @@ function Avatar({ username, profilePicture, size = 40 }) {
     if (profilePicture) {
         return (
             <img
-                src={`${API}${profilePicture}`}
+                src={`${API_URL}${profilePicture}`}
                 alt={username}
                 className="lb-avatar-img"
                 style={{ width: size, height: size }}
@@ -79,6 +78,7 @@ function RankBadge({ rank }) {
 
 function LeaderboardCard({ category, entries, loading }) {
     const navigate = useNavigate();
+    const topValue = entries?.[0]?.[category.valueKey] || 0;
 
     return (
         <div className="lb-card" style={{ "--cat-color": category.color }}>
@@ -132,13 +132,13 @@ function LeaderboardCard({ category, entries, loading }) {
                                     <div
                                         className="lb-entry-bar"
                                         style={{
-                                            width: `${(entry[category.valueKey] / entries[0][category.valueKey]) * 100}%`
+                                            width: `${topValue > 0 ? (entry[category.valueKey] / topValue) * 100 : 0}%`
                                         }}
                                     />
                                 </div>
 
                                 <div className="lb-entry-value">
-                                    <span className="lb-value-num">{entry[category.valueKey].toLocaleString()}</span>
+                                    <span className="lb-value-num">{(entry[category.valueKey] ?? 0).toLocaleString()}</span>
                                     <span className="lb-value-label">{category.valueLabel}</span>
                                 </div>
                             </div>
@@ -152,8 +152,10 @@ function LeaderboardCard({ category, entries, loading }) {
 
 export default function Leaderboard() {
     const [period, setPeriod] = useState("monthly");
-    const [data, setData] = useState(null);
+    const [data, setData] = useState({ mostLiked: [], mostReviews: [], mostListened: [] });
+    const [periodUsed, setPeriodUsed] = useState("monthly");
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         fetchLeaderboard();
@@ -161,14 +163,21 @@ export default function Leaderboard() {
 
     const fetchLeaderboard = async () => {
         setLoading(true);
+        setError(null);
         try {
-            const res = await fetch(`${API}/api/leaderboard?period=${period}`);
+            const res = await fetch(`${API_URL}/api/leaderboard?period=${period}`);
             const json = await res.json();
-            if (json.success) {
-                setData(json.leaderboards);
+            if (res.ok && json.success) {
+                setData(json.leaderboards || { mostLiked: [], mostReviews: [], mostListened: [] });
+                setPeriodUsed(json.periodUsed || period);
+            } else {
+                setError(json.message || "Failed to load leaderboard");
+                setData({ mostLiked: [], mostReviews: [], mostListened: [] });
             }
         } catch (err) {
             console.error("Error fetching leaderboard:", err);
+            setError("Could not connect to the server. Is the backend running?");
+            setData({ mostLiked: [], mostReviews: [], mostListened: [] });
         } finally {
             setLoading(false);
         }
@@ -186,6 +195,16 @@ export default function Leaderboard() {
                         <p className="lb-hero-sub">
                             See who's leading the TuneSpace community
                         </p>
+                        {!loading && periodUsed === "all-time" && (
+                            <p className="lb-hero-sub" style={{ marginTop: 8, color: "#f39c12" }}>
+                                No activity for this period. Showing all-time results.
+                            </p>
+                        )}
+                        {error && (
+                            <p className="lb-hero-sub" style={{ marginTop: 8, color: "#e74c3c" }}>
+                                {error}
+                            </p>
+                        )}
                     </div>
 
                     {/* Period Switcher */}
@@ -247,7 +266,7 @@ function PodiumSlot({ entry, place, valueKey, valueLabel }) {
             <Avatar username={entry.username} profilePicture={entry.profilePicture} size={56} />
             <div className="lb-podium-username">{entry.username}</div>
             <div className="lb-podium-value" style={{ color: colors[place] }}>
-                {entry[valueKey].toLocaleString()}
+                {(entry[valueKey] ?? 0).toLocaleString()}
                 <span className="lb-podium-label"> {valueLabel}</span>
             </div>
             <div

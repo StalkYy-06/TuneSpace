@@ -3,8 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import BottomBar from "../components/BottomBar";
 import "../styles/search.css";
-
-const API = "http://localhost:5000";
+import { API_URL } from "../config/api";
 
 const TYPE_TABS = [
     { value: "all", label: "All" },
@@ -23,12 +22,41 @@ export default function Search() {
     const [error, setError] = useState(null);
     const inputRef = useRef(null);
 
+    // Discovery data
+    const [trendingAlbums, setTrendingAlbums] = useState([]);
+    const [popularArtists, setPopularArtists] = useState([]);
+    const [homeLoading, setHomeLoading] = useState(true);
+
+    // "See more" toggles
+    const [showAllAlbums, setShowAllAlbums] = useState(false);
+    const [showAllArtists, setShowAllArtists] = useState(false);
+
+    const INITIAL_COUNT = 10;
+    const MAX_COUNT = 50;
+
     useEffect(() => {
         const q = searchParams.get("q");
         const t = searchParams.get("type") || "all";
         if (q) { setQuery(q); setType(t); doSearch(q, t); }
         inputRef.current?.focus();
+        fetchHomeData();
     }, []);
+
+    const fetchHomeData = async () => {
+        setHomeLoading(true);
+        try {
+            const res = await fetch(`${API_URL}/api/music/home`);
+            const data = await res.json();
+            if (data.success) {
+                setTrendingAlbums(data.trendingAlbums || []);
+                setPopularArtists(data.popularArtists || []);
+            }
+        } catch (err) {
+            console.error("Home data error:", err);
+        } finally {
+            setHomeLoading(false);
+        }
+    };
 
     const doSearch = async (q, t) => {
         if (!q.trim()) return;
@@ -37,7 +65,7 @@ export default function Search() {
         setResults([]);
         try {
             const params = new URLSearchParams({ q: q.trim(), type: t });
-            const res = await fetch(`${API}/api/music/search?${params}`);
+            const res = await fetch(`${API_URL}/api/music/search?${params}`);
             const data = await res.json();
             if (data.success) {
                 setResults(data.results);
@@ -66,6 +94,20 @@ export default function Search() {
             navigate(`/album/${result.key}`);
         }
     };
+
+    const fmtNumber = (n) =>
+        n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` :
+            n >= 1_000 ? `${(n / 1_000).toFixed(1)}K` : String(n || 0);
+
+    const visibleAlbums = showAllAlbums
+        ? trendingAlbums.slice(0, MAX_COUNT)
+        : trendingAlbums.slice(0, INITIAL_COUNT);
+
+    const visibleArtists = showAllArtists
+        ? popularArtists.slice(0, MAX_COUNT)
+        : popularArtists.slice(0, INITIAL_COUNT);
+
+    const showDiscovery = !query && !loading;
 
     return (
         <div className="search-wrapper">
@@ -112,7 +154,7 @@ export default function Search() {
                 {/* ── Error ── */}
                 {error && <div className="search-error">{error}</div>}
 
-                {/* ── Loading skeletons ── */}
+                {/* ── Loading skeletons for search ── */}
                 {loading && (
                     <div className="search-results-grid">
                         {[...Array(8)].map((_, i) => (
@@ -151,7 +193,7 @@ export default function Search() {
                                     className="search-result-card"
                                     onClick={() => handleResultClick(result)}>
                                     <div className="src-thumb-wrap">
-                                        {(result.cover_url || result.thumb_url || result.image_url || result.thumb_url) ? (
+                                        {(result.cover_url || result.thumb_url || result.image_url) ? (
                                             <>
                                                 <img
                                                     src={result.cover_url || result.thumb_url || result.image_url}
@@ -192,20 +234,157 @@ export default function Search() {
                     </>
                 )}
 
-                {/* ── Initial empty state ── */}
-                {!loading && results.length === 0 && !query && (
-                    <div className="search-start-hint">
-                        <div className="search-start-icon">🎸</div>
-                        <h3>Search for anything</h3>
-                        <p>Albums and artists — powered by Last.fm</p>
-                        <div className="search-suggestions">
-                            {["Dark Side of the Moon", "Miles Davis", "Radiohead", "Blonde", "Led Zeppelin", "Kendrick Lamar"].map(s => (
-                                <button key={s} className="search-suggestion"
-                                    onClick={() => { setQuery(s); doSearch(s, type); }}>
-                                    {s}
-                                </button>
-                            ))}
+                {/* ── Discovery: shown when no search query ── */}
+                {showDiscovery && (
+                    <div className="search-discovery">
+
+                        {/* Trending Albums */}
+                        <div className="discovery-section">
+                            <div className="discovery-header">
+                                <h2 className="discovery-title">🔥 Trending Albums</h2>
+                                {trendingAlbums.length > INITIAL_COUNT && (
+                                    <button
+                                        className="discovery-see-more"
+                                        onClick={() => setShowAllAlbums(v => !v)}
+                                    >
+                                        {showAllAlbums ? "Show Less" : `See More (${Math.min(trendingAlbums.length, MAX_COUNT)})`}
+                                    </button>
+                                )}
+                            </div>
+
+                            {homeLoading ? (
+                                <div className="discovery-scroll-row">
+                                    {[...Array(10)].map((_, i) => (
+                                        <div key={i} className="disc-album-card disc-skeleton-card">
+                                            <div className="disc-album-cover disc-skeleton" />
+                                            <div className="disc-skeleton disc-skeleton-text" style={{ width: "80%", marginTop: 10 }} />
+                                            <div className="disc-skeleton disc-skeleton-text" style={{ width: "55%", marginTop: 6 }} />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className={showAllAlbums ? "discovery-wrap-row" : "discovery-scroll-row"}>
+                                    {visibleAlbums.map(album => (
+                                        <div
+                                            key={album.lastfm_key}
+                                            className="disc-album-card"
+                                            onClick={() => navigate(`/album/${encodeURIComponent(album.lastfm_key)}`)}
+                                        >
+                                            <div className="disc-album-cover">
+                                                {album.cover_url || album.thumb_url ? (
+                                                    <>
+                                                        <img
+                                                            src={album.cover_url || album.thumb_url}
+                                                            alt={album.title}
+                                                            onError={e => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }}
+                                                        />
+                                                        <div className="disc-cover-fallback" style={{ display: "none" }}>💿</div>
+                                                    </>
+                                                ) : (
+                                                    <div className="disc-cover-fallback">💿</div>
+                                                )}
+                                                {album.avgRating && (
+                                                    <div className="disc-rating-badge">★ {album.avgRating}</div>
+                                                )}
+                                            </div>
+                                            <div className="disc-album-info">
+                                                <div className="disc-album-title">{album.title}</div>
+                                                <div className="disc-album-artist">{album.artist}</div>
+                                                {album.lastfm_listeners > 0 && (
+                                                    <div className="disc-album-meta">
+                                                        👥 {fmtNumber(album.lastfm_listeners)}
+                                                    </div>
+                                                )}
+                                                {album.lastfm_tags?.length > 0 && (
+                                                    <div className="disc-tags">
+                                                        {album.lastfm_tags.slice(0, 2).map(tag => (
+                                                            <span key={tag} className="disc-tag">{tag}</span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
+
+                        {/* Popular Artists */}
+                        <div className="discovery-section">
+                            <div className="discovery-header">
+                                <h2 className="discovery-title">🎤 Popular Artists</h2>
+                                {popularArtists.length > INITIAL_COUNT && (
+                                    <button
+                                        className="discovery-see-more"
+                                        onClick={() => setShowAllArtists(v => !v)}
+                                    >
+                                        {showAllArtists ? "Show Less" : `See More (${Math.min(popularArtists.length, MAX_COUNT)})`}
+                                    </button>
+                                )}
+                            </div>
+
+                            {homeLoading ? (
+                                <div className="discovery-scroll-row">
+                                    {[...Array(10)].map((_, i) => (
+                                        <div key={i} className="disc-artist-card disc-skeleton-card">
+                                            <div className="disc-artist-img disc-skeleton" style={{ borderRadius: "50%" }} />
+                                            <div className="disc-skeleton disc-skeleton-text" style={{ width: "70%", marginTop: 10 }} />
+                                            <div className="disc-skeleton disc-skeleton-text" style={{ width: "50%", marginTop: 6 }} />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className={showAllArtists ? "discovery-wrap-row" : "discovery-scroll-row"}>
+                                    {visibleArtists.map(artist => (
+                                        <div
+                                            key={artist.lastfm_key}
+                                            className="disc-artist-card"
+                                            onClick={() => navigate(`/artist/${encodeURIComponent(artist.lastfm_key)}`)}
+                                        >
+                                            <div className="disc-artist-img">
+                                                {artist.image_url || artist.thumb_url ? (
+                                                    <>
+                                                        <img
+                                                            src={artist.image_url || artist.thumb_url}
+                                                            alt={artist.name}
+                                                            onError={e => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }}
+                                                        />
+                                                        <div className="disc-artist-fallback" style={{ display: "none" }}>
+                                                            {artist.name?.charAt(0).toUpperCase()}
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div className="disc-artist-fallback">
+                                                        {artist.name?.charAt(0).toUpperCase()}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="disc-artist-name">{artist.name}</div>
+                                            {artist.lastfm_listeners > 0 && (
+                                                <div className="disc-artist-fans">{fmtNumber(artist.lastfm_listeners)} listeners</div>
+                                            )}
+                                            {artist.lastfm_tags?.length > 0 && (
+                                                <div className="disc-artist-genre">{artist.lastfm_tags[0]}</div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Quick search suggestions */}
+                        <div className="search-suggestions-section">
+                            <p className="search-suggestions-label">Try searching for</p>
+                            <div className="search-suggestions">
+                                {["Dark Side of the Moon", "Miles Davis", "Radiohead", "Blonde", "Led Zeppelin", "Kendrick Lamar"].map(s => (
+                                    <button key={s} className="search-suggestion"
+                                        onClick={() => { setQuery(s); doSearch(s, type); }}>
+                                        {s}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
                     </div>
                 )}
             </main>

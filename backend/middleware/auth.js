@@ -1,6 +1,8 @@
 import jwt from "jsonwebtoken";
+import JWT_SECRET from "../utils/jwtSecret.js";
+import { rejectIfBanned } from "./checkBan.js";
 
-export const protect = (req, res, next) => {
+export const protect = async (req, res, next) => {
     const token = req.cookies.token;
 
     if (!token) {
@@ -8,8 +10,9 @@ export const protect = (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, JWT_SECRET);
         req.user = { id: decoded.id };
+        if (await rejectIfBanned(decoded.id, res)) return;
         next();
     } catch (err) {
         res.status(401).json({ message: "Not authorized, token failed" });

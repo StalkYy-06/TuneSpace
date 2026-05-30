@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/adminLogin.css";
+import { API_URL } from "../config/api";
 
 const AdminLogin = () => {
     const [email, setEmail] = useState("");
@@ -16,7 +17,7 @@ const AdminLogin = () => {
 
     const checkAdminAuth = async () => {
         try {
-            const response = await fetch("http://localhost:5000/api/admin/auth/check", {
+            const response = await fetch(`${API_URL}/api/admin/auth/check`, {
                 credentials: "include"
             });
             const data = await response.json();
@@ -34,7 +35,7 @@ const AdminLogin = () => {
         setIsLoading(true);
 
         try {
-            const response = await fetch("http://localhost:5000/api/admin/auth/login", {
+            const response = await fetch(`${API_URL}/api/admin/auth/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

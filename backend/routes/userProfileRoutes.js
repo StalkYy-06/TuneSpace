@@ -5,6 +5,7 @@ import UserFollow from "../models/UserFollow.js";
 import FavouriteAlbum from "../models/FavouriteAlbum.js";
 import ListenedAlbum from "../models/ListenedAlbum.js";
 import jwt from "jsonwebtoken";
+import JWT_SECRET from "../utils/jwtSecret.js";
 
 const router = express.Router();
 
@@ -13,7 +14,7 @@ const optionalAuth = (req, res, next) => {
     try {
         const token = req.cookies.token;
         if (token) {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET || "your-secret-key");
+            const decoded = jwt.verify(token, JWT_SECRET);
             req.userId = decoded.id;
         }
         next();
@@ -29,7 +30,7 @@ const requireAuth = (req, res, next) => {
         if (!token) {
             return res.status(401).json({ success: false, message: "Unauthorized" });
         }
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || "your-secret-key");
+        const decoded = jwt.verify(token, JWT_SECRET);
         req.userId = decoded.id;
         next();
     } catch (err) {
@@ -51,10 +52,25 @@ router.get("/user/:username", optionalAuth, async (req, res) => {
             .sort({ createdAt: -1 })
             .limit(20);
 
-        const [followersCount, followingCount] = await Promise.all([
+        const [followersCount, followingCount, totalReviews, reviewStats] = await Promise.all([
             UserFollow.countDocuments({ followingId: user._id }),
-            UserFollow.countDocuments({ followerId: user._id })
+            UserFollow.countDocuments({ followerId: user._id }),
+            Review.countDocuments({ userId: user._id }),
+            Review.aggregate([
+                { $match: { userId: user._id } },
+                {
+                    $group: {
+                        _id: null,
+                        avgRating: { $avg: "$rating" },
+                        totalLikes: { $sum: "$likes" }
+                    }
+                }
+            ])
         ]);
+
+        const statsAgg = reviewStats[0] || { avgRating: 0, totalLikes: 0 };
+        const avgRating = totalReviews > 0 ? Number(statsAgg.avgRating || 0).toFixed(1) : 0;
+        const totalLikes = statsAgg.totalLikes || 0;
 
         let isFollowing = false;
         if (req.userId) {
@@ -65,24 +81,19 @@ router.get("/user/:username", optionalAuth, async (req, res) => {
             isFollowing = !!followRecord;
         }
 
-        const totalReviews = reviews.length;
-        const avgRating = reviews.length > 0
-            ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
-            : 0;
-        const totalLikes = reviews.reduce((sum, r) => sum + (r.likes || 0), 0);
+        const totalReviewsCount = totalReviews;
 
         res.json({
             success: true,
             user: {
                 _id: user._id,
                 username: user.username,
-                email: user.email,
                 bio: user.bio,
                 profilePicture: user.profilePicture,
                 createdAt: user.createdAt
             },
             stats: {
-                totalReviews,
+                totalReviews: totalReviewsCount,
                 avgRating,
                 totalLikes,
                 followersCount,

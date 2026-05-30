@@ -6,7 +6,7 @@ import InputField from "../components/InputField";
 import GoogleIcon from "../icons/google.png";
 import OtpVerification from "./OtpVerification";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+import { API_URL } from "../config/api";
 
 export default function Login() {
     const [form, setForm] = useState({ usernameOrEmail: "", password: "" });
@@ -39,7 +39,7 @@ export default function Login() {
                 setOtpPhase(true);
             } else {
                 // Direct login without 2FA
-                navigate("/");
+                navigate("/home");
             }
         } catch (err) {
             const data = err.response?.data;
@@ -53,7 +53,7 @@ export default function Login() {
 
     // Successful OTP verification
     const handleOtpVerified = () => {
-        navigate("/");
+        navigate("/home");
     };
 
     // Handle Google OAuth login

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "../styles/reportModal.css";
+import { API_URL } from "../config/api";
 
 const ReportModal = ({ isOpen, onClose, review, onReportSubmit }) => {
     const [selectedReason, setSelectedReason] = useState("");
@@ -27,7 +28,7 @@ const ReportModal = ({ isOpen, onClose, review, onReportSubmit }) => {
         setError("");
 
         try {
-            const response = await fetch(`http://localhost:5000/api/reviews/${review._id}/report`, {
+            const response = await fetch(`${API_URL}/api/reviews/${review._id}/report`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

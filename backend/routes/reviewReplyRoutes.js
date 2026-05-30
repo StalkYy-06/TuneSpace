@@ -3,6 +3,7 @@ import ReviewReply from "../models/ReviewReply.js";
 import Review from "../models/Review.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
+import JWT_SECRET from "../utils/jwtSecret.js";
 
 const router = express.Router();
 
@@ -13,7 +14,7 @@ const verifyToken = (req, res, next) => {
         if (!token) {
             return res.status(401).json({ success: false, message: "Unauthorized" });
         }
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || "your-secret-key");
+        const decoded = jwt.verify(token, JWT_SECRET);
         req.userId = decoded.id;
         next();
     } catch (err) {

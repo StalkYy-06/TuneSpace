@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import axios from "axios";
 import "../styles/otp.css";
 
+import { API_URL } from "../config/api";
+
 export default function OtpVerification({ email, onSuccess, mode = "register" }) {
     const [otp, setOtp] = useState("");
     const [loading, setLoading] = useState(false);
@@ -10,21 +12,15 @@ export default function OtpVerification({ email, onSuccess, mode = "register" })
 
     // Determine which endpoint to use based on mode
     const getVerifyEndpoint = () => {
-        if (mode === "register") {
-            return "http://localhost:5000/api/auth/verify-registration";
-        } else if (mode === "login") {
-            return "http://localhost:5000/api/auth/verify-2fa";
-        }
-        return "http://localhost:5000/api/auth/verify-registration";
+        if (mode === "register") return `${API_URL}/api/auth/verify-registration`;
+        if (mode === "login") return `${API_URL}/api/auth/verify-2fa`;
+        return `${API_URL}/api/auth/verify-registration`;
     };
 
     const getResendEndpoint = () => {
-        if (mode === "register") {
-            return "http://localhost:5000/api/auth/send-register-otp";
-        } else if (mode === "login") {
-            return "http://localhost:5000/api/auth/send-login-otp";
-        }
-        return "http://localhost:5000/api/auth/send-register-otp";
+        if (mode === "register") return `${API_URL}/api/auth/send-register-otp`;
+        if (mode === "login") return `${API_URL}/api/auth/send-login-otp`;
+        return `${API_URL}/api/auth/send-register-otp`;
     };
 
     const handleSubmit = async (e) => {
@@ -55,7 +51,7 @@ export default function OtpVerification({ email, onSuccess, mode = "register" })
         setError("");
         try {
             const endpoint = getResendEndpoint();
-            await axios.post(endpoint, { email });
+            await axios.post(endpoint, { email }, { withCredentials: true });
             alert("OTP resent successfully!");
         } catch (err) {
             setError("Failed to resend OTP");
